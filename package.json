@@ -17,6 +17,9 @@
     "node-fetch": "^2.6.9",
     "nodemon": "^2.0.20",
     "pg": "^8.9.0",
-    "socket.io": "^4.6.0"
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.29.0",
+    "socket.io": "^4.6.0",
+    "uuid": "^9.0.0"
   }
 }

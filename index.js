@@ -113,6 +113,15 @@ app.get('/', (req, res) => {
     res.status(200).send('Hello World!');
 })
 
+const db = require('./app/models');
+db.sequelize.sync()
+.then(() => {
+    console.log('Synced db.');
+})
+.catch((err) => {
+    console.log('Failed to sync db: '+err.message);
+})
+
 const client = new Client({
     user: 'admin',
     host: 'localhost',
@@ -126,6 +135,8 @@ client.query('SELECT NOW()', (err, res) => {
     client.end()
 })
 
+require('./app/routes/userProfile.routes')(app);
+require('./app/routes/group.routes')(app);
 
 
 
