@@ -137,7 +137,8 @@ client.query('SELECT NOW()', (err, res) => {
 
 require('./app/routes/userProfile.routes')(app);
 require('./app/routes/group.routes')(app);
-
+require('./app/routes/activity.routes')(app);
+require('./app/routes/stage.routes')(app);
 
 
 app.get('/get-token', (req, res) => {
