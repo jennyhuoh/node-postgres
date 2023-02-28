@@ -23,6 +23,7 @@ db.groups = require('./group.model')(sequelize, Sequelize);
 db.userProfile_group = require('./userProfile_group.model')(sequelize, Sequelize);
 db.activities = require('./activity.model')(sequelize, Sequelize);
 db.stages = require('./stage.model')(sequelize, Sequelize);
+db.teams = require('./team.model')(sequelize, Sequelize);
 
 // group有許多member，user有許多group
 db.groups.belongsToMany(db.userProfiles, {
@@ -54,6 +55,18 @@ db.activities.hasMany(db.stages, {
 db.stages.belongsTo(db.activities, {
     foreignKey: 'mainActivity_id',
     as: 'activitiesForStages'
+})
+
+// 一個stage可以有多個teams，一個team可以屬於許多stages
+db.stages.belongsToMany(db.teams, {
+    through: 'stage_team',
+    foreignKey: 'stage_id',
+    as: "teams"
+})
+db.teams.belongsToMany(db.stages, {
+    through: 'stage_team',
+    foreignKey: 'team_id', 
+    as: 'stages'
 })
 
 module.exports = db;
