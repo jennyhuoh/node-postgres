@@ -1,7 +1,6 @@
 const dbConfig = require("../config/db.config.js")
 
 const Sequelize = require('sequelize');
-const stage_teamModel = require("./stage_team.model.js");
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     host: dbConfig.HOST,
     dialect: dbConfig.dialect,
@@ -18,7 +17,6 @@ const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
-
 db.userProfiles = require('./userProfile.model')(sequelize, Sequelize);
 db.groups = require('./group.model')(sequelize, Sequelize);
 db.userProfile_group = require('./userProfile_group.model')(sequelize, Sequelize);

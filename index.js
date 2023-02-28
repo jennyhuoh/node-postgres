@@ -142,6 +142,7 @@ require('./app/routes/stage.routes')(app);
 require('./app/routes/team.routes')(app);
 
 
+
 app.get('/get-token', (req, res) => {
     const API_KEY = process.env.VIDEOSDK_API_KEY
     const SECRET_KEY = process.env.VIDEOSDK_SECRET_KEY

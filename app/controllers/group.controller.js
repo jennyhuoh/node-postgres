@@ -23,8 +23,7 @@ exports.create = (req, res) => {
     .then(data => {
         console.log('successfully create a group!')
         res.send(data)
-        console.log(data.id)
-        console.log(data.dataValues)
+
         // 建立group的member&host
         req.body.members.forEach((member) => {
             const userProfile_group = {
