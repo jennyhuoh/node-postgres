@@ -3,5 +3,7 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create new teams in a stage
-    router.post('/stage/:stageId/team', teams.create);
+    router.post('/teams', teams.create);
+
+    app.use(router);
 }   

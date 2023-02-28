@@ -1,6 +1,7 @@
 const dbConfig = require("../config/db.config.js")
 
 const Sequelize = require('sequelize');
+const stage_teamModel = require("./stage_team.model.js");
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     host: dbConfig.HOST,
     dialect: dbConfig.dialect,
@@ -60,13 +61,13 @@ db.stages.belongsTo(db.activities, {
 // 一個stage可以有多個teams，一個team可以屬於許多stages
 db.stages.belongsToMany(db.teams, {
     through: 'stage_team',
-    foreignKey: 'stage_id',
-    as: "teams"
+    as: 'teams',
+    foreignKey: 'team_id'
 })
 db.teams.belongsToMany(db.stages, {
     through: 'stage_team',
-    foreignKey: 'team_id', 
-    as: 'stages'
+    as: 'stages',
+    foreignKey: 'stage_id'
 })
 
 module.exports = db;
