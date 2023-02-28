@@ -8,7 +8,6 @@ exports.create = async (req, res) => {
     await Promise.all(
         req.body.data.map(async ele => {
             const team = {
-                // teamMeetingId: `${uuidv4()}`,
                 teamName: ele.teamName,
                 teamOrder: ele.teamOrder,
                 teamMembers: ele.teamMembers,

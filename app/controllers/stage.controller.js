@@ -16,11 +16,9 @@ exports.create = async (req, res) => {
             await Stage.create(stage)
             .then(data => {
                 console.log('successfully added a stage!')
-
                 if(stage.grouping){
                     stageArr.push(data.dataValues)
                 }
-
             })
             .catch(err => {
                 res.status(500).send({
