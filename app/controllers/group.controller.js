@@ -73,7 +73,7 @@ exports.update = (req, res) => {
     res.send({user:'success'})
 }
 
-// Print all Group
+// Print all alive Group
 exports.getAll = (req, res) => {
     Group.findAll({
         include: [
@@ -87,10 +87,73 @@ exports.getAll = (req, res) => {
             },
         ],
     })
-    .then((data) => {
-        res.send(data)
+    .then(async (data) => {
+        var dataArr = [];
+        await Promise.all(
+            data.map((group) => {
+                const nowDate = new Date();
+                const expiryDate = new Date(group.groupExpiryDate);
+                console.log(expiryDate < nowDate)
+                if(expiryDate > nowDate) {
+                    dataArr.push(group);
+                }
+            })
+        );
+        return res.send(dataArr);
     })
     .catch((err) => {
         console.log('Error while retrieving Groups: ', err);
+    })
+}
+
+// Print all history Group
+exports.getAllHistory = (req, res) => {
+    Group.findAll({
+        include: [
+            {
+                model: UserProfile,
+                as: 'userProfiles',
+                attributes: ['id', 'userName'],
+                through: {
+                    attributes: [],
+                },
+            },
+        ],
+    })
+    .then(async (data) => {
+        var dataArr = [];
+        await Promise.all(
+            data.map((group) => {
+                const nowDate = new Date();
+                const expiryDate = new Date(group.groupExpiryDate);
+                console.log(expiryDate < nowDate)
+                if(expiryDate < nowDate) {
+                    dataArr.push(group);
+                }
+            })
+        );
+        return res.send(dataArr);
+    })
+    .catch((err) => {
+        console.log('Error while retrieving Groups: ', err);
+    })
+}
+
+// Delete a Group
+exports.delete = (req, res) => {
+    const id = req.params.groupId;
+
+    Group.destroy({where: {id: id}})
+    .then(num => {
+        if(num === 1) {
+            res.send({message: 'succesfully deleted!'})
+        } else{
+            res.send({message: 'failed to delete'})
+        }
+    })
+    .catch(err => {
+        res.status(500).send({
+            message: 'failed to delete'
+        })
     })
 }

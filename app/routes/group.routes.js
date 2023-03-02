@@ -9,6 +9,10 @@ module.exports = app => {
     router.post('/group/:groupId', group.update);
     // Get all groups
     router.get('/groups', group.getAll);
+    // Get all history groups
+    router.get('/history/groups', group.getAllHistory);
+    // Delete a group
+    router.delete('/group/:groupId', group.delete);
 
     app.use(router);
 }
