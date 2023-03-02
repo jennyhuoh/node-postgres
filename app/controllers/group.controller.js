@@ -2,6 +2,8 @@ const db = require('../models');
 const Group = db.groups;
 const UserProfile_Group = db.userProfile_group;
 const UserProfile = db.userProfiles;
+const Activity = db.activities;
+const Stage = db.stages;
 const Op = db.Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
 
@@ -140,9 +142,15 @@ exports.getAllHistory = (req, res) => {
 }
 
 // Delete a Group
-exports.delete = (req, res) => {
+exports.delete = async (req, res) => {
     const id = req.params.groupId;
-
+    await Activity.findAll({where: {bigGroup_id: id}})
+    .then((activity) => {
+        activity.forEach((a) => {
+            Stage.destroy({where: {mainActivity_id: a.dataValues.id}})
+        })
+    })
+    Activity.destroy({where: {bigGroup_id: id}})
     Group.destroy({where: {id: id}})
     .then(num => {
         if(num === 1) {

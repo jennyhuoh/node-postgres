@@ -9,7 +9,10 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
         max: dbConfig.pool.max,
         min: dbConfig.pool.min,
         acquire: dbConfig.pool.acquire,
-        idle: dbConfig.pool.idle
+        idle: dbConfig.pool.idle,
+        evict: dbConfig.pool.evict,
+        idleTimeoutMillis: 1,
+        connectionTimeoutMillis: 2000
     }
 });
 
@@ -40,17 +43,17 @@ db.userProfiles.belongsToMany(db.groups, {
 // 一個group有許多activities，一個activity只屬於一個group
 db.groups.hasMany(db.activities, { 
     foreignKey: 'bigGroup_id',
-    as: 'activitiesForGroup' 
+    as: 'activitiesForGroup'
 });
 db.activities.belongsTo(db.groups, { 
     as: 'groupsForActivities',
-    foreignKey: 'bigGroup_id',
+    foreignKey: 'bigGroup_id'
 })
 
 // 一個activity有許多stages，一個stage只屬於一個activity
 db.activities.hasMany(db.stages, {
     foreignKey: 'mainActivity_id',
-    as: 'stagesForActivity',
+    as: 'stagesForActivity'
 })
 db.stages.belongsTo(db.activities, {
     foreignKey: 'mainActivity_id',
@@ -61,12 +64,12 @@ db.stages.belongsTo(db.activities, {
 db.stages.belongsToMany(db.teams, {
     through: 'stage_team',
     as: 'teams',
-    foreignKey: 'team_id'
+    foreignKey: 'stage_id'
 })
 db.teams.belongsToMany(db.stages, {
     through: 'stage_team',
     as: 'stages',
-    foreignKey: 'stage_id'
+    foreignKey: 'team_id'
 })
 
 // 一個user有多個teamTemplate，一個teamTemplate只屬於一個user
