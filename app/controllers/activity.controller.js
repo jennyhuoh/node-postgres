@@ -3,21 +3,22 @@ const Activity = db.activities;
 const Stage = db.stages;
 const Op = db.Sequelize.Op;
 
+function calculateExpiryDate(date){
+    const expiryDate = new Date(date);
+    expiryDate.setDate(expiryDate.getDate()+2);
+    var year = expiryDate.toLocaleDateString("default", {year: "numeric"});
+    var month = expiryDate.toLocaleDateString("default", {month: "2-digit"});
+    var day = expiryDate.toLocaleDateString("default", {day: "2-digit"});
+    var formatted = year+"-"+month+"-"+day
+    return formatted;
+}
+
 // Create and save an activity
-exports.create = (req, res) => {
-    function calculateExpiryDate(){
-        const expiryDate = new Date(req.body.activityStartDate);
-        expiryDate.setDate(expiryDate.getDate()+2);
-        var year = expiryDate.toLocaleDateString("default", {year: "numeric"});
-        var month = expiryDate.toLocaleDateString("default", {month: "2-digit"});
-        var day = expiryDate.toLocaleDateString("default", {day: "2-digit"});
-        var formatted = year+"-"+month+"-"+day
-        return formatted;
-    }
+exports.create = (req, res) => { 
     const activity = {
         activityName: req.body.activityName,
         activityStartDate: req.body.activityStartDate,
-        activityExpiryDate: calculateExpiryDate(),
+        activityExpiryDate: calculateExpiryDate(req.body.activityStartDate),
         bigGroup_id: req.params.groupId
     }
 
@@ -30,6 +31,35 @@ exports.create = (req, res) => {
             message:
             err.message || "Some error occurred while creating the Activity."
         })
+    })
+}
+
+// Update an activity
+exports.update = (req, res) => {
+    const id = req.params.activityId;
+    const newActivity = {
+        activityName: req.body.activityName,
+        activityStartDate: req.body.activityStartDate,
+        activityExpiryDate: calculateExpiryDate(req.body.activityStartDate)
+    }
+    Activity.update(newActivity, {where: {id: id}})
+    .then(() => {
+        res.send({message: 'successfully updated the activity!'})
+    })
+    .catch((err) => {
+        console.log('Error occurred while updating the activity.', err)
+    })
+}
+
+// Print an activity
+exports.getOne = (req, res) => {
+    const id = req.params.activityId;
+    Activity.findOne({where: {id: id}})
+    .then(activity => {
+        res.send(activity)
+    })
+    .catch((err) => {
+        console.log('Error occurred while getting an activity.', err)
     })
 }
 

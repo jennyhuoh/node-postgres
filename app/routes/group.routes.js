@@ -7,6 +7,8 @@ module.exports = app => {
     router.post('/group', group.create);
     // Update a group
     router.post('/group/:groupId', group.update);
+    // Get a group
+    router.get('/group/:groupId', group.getOne);
     // Get all groups
     router.get('/groups', group.getAll);
     // Get all history groups

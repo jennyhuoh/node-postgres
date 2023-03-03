@@ -57,7 +57,6 @@ exports.create = (req, res) => {
 // Update Group content
 exports.update = (req, res) => {
     const id = req.params.groupId;
-    // Group.findOne({where: {id: id}})
     const newGroup = {
         groupName: req.body.groupName,
         groupExpiryDate: req.body.groupExpiryDate
@@ -75,6 +74,29 @@ exports.update = (req, res) => {
     res.send({user:'success'})
 }
 
+// Print a Group
+exports.getOne = (req, res) => {
+    const id = req.params.groupId;
+    Group.findByPk(id, {
+        include: [
+            {
+                model: UserProfile,
+                as: 'userProfiles',
+                attributes: ['id', 'userName', 'userEmail'],
+                through: {
+                    attributes: [],
+                },
+            },
+        ],
+    })
+    .then((data) => {
+        res.send(data)
+    })
+    .catch((err) => {
+        console.log('Error occurred while getting a group.', err);
+    })
+}
+
 // Print all alive Group
 exports.getAll = (req, res) => {
     Group.findAll({
@@ -82,7 +104,7 @@ exports.getAll = (req, res) => {
             {
                 model: UserProfile,
                 as: 'userProfiles',
-                attributes: ['id', 'userName'],
+                attributes: ['id', 'userName', 'userEmail'],
                 through: {
                     attributes: [],
                 },
@@ -95,7 +117,6 @@ exports.getAll = (req, res) => {
             data.map((group) => {
                 const nowDate = new Date();
                 const expiryDate = new Date(group.groupExpiryDate);
-                console.log(expiryDate < nowDate)
                 if(expiryDate > nowDate) {
                     dataArr.push(group);
                 }
