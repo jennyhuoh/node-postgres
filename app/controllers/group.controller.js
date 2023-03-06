@@ -4,6 +4,7 @@ const UserProfile_Group = db.userProfile_group;
 const UserProfile = db.userProfiles;
 const Activity = db.activities;
 const Stage = db.stages;
+const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
 
@@ -62,16 +63,25 @@ exports.update = (req, res) => {
         groupExpiryDate: req.body.groupExpiryDate
     }
     Group.update(newGroup, {where: {id: id}})
-    Group.findByPk(id)
-    .then((group) => {
-        req.body.members.forEach((member) => {
-            group.setUserProfiles(member.id, { through: {isOwner: member.isOwner}})
+    try {
+        sequelize.transaction(async (t) => {
+            await Group.findByPk(id)
+            .then(async (group) => {
+                await Promise.all(
+                    req.body.members.map(async (member) => {
+                        console.log(member);
+                        await group.setUserProfiles(member.id, { through: {isOwner: member.isOwner} },{transaction: t});
+                    })
+                );
+            })
+            .catch((err) => {
+                console.log('Error occurred while editing the group.', err)
+             })
+            return res.send({user:'success'})
         })
-    })
-    .catch((err) => {
-        console.log('Error occurred while editing the group.', err)
-    })
-    res.send({user:'success'})
+    } catch(err) {
+        console.log('err', err)
+    }
 }
 
 // Print a Group
@@ -167,9 +177,17 @@ exports.delete = async (req, res) => {
     const id = req.params.groupId;
     await Activity.findAll({where: {bigGroup_id: id}})
     .then((activity) => {
-        activity.forEach((a) => {
-            Stage.destroy({where: {mainActivity_id: a.dataValues.id}})
-        })
+        try{
+            sequelize.transaction(async (t) => {
+                await Promise.all(
+                    activity.map(async (a) => {
+                        Stage.destroy({where: {mainActivity_id: a.dataValues.id}, transaction: t})
+                    })
+                );
+            })
+        }catch(err){
+            console.log('err', err)
+        }
     })
     Activity.destroy({where: {bigGroup_id: id}})
     Group.destroy({where: {id: id}})

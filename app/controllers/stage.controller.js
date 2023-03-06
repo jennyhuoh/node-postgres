@@ -2,6 +2,9 @@ const db = require('../models');
 const Stage = db.stages;
 const Op = db.Sequelize.Op;
 
+// Create stages with no activity id
+
+
 exports.create = async (req, res) => {
     var stageArr = [];
     await Promise.all(
