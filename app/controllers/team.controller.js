@@ -1,31 +1,39 @@
 const db = require('../models');
 const Team = db.teams;
 const Stage = db.stages;
+const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 
 // Create and save new Teams for a stage
 exports.create = async (req, res) => {
-    await Promise.all(
-        req.body.data.map(async ele => {
-            const team = {
-                teamName: ele.teamName,
-                teamOrder: ele.teamOrder,
-                teamMembers: ele.teamMembers,
-            }
-            await Team.create(team)
-            .then(async data => {
-                console.log('successfully create a team!')
-                this.addToStage(data.id, ele.stage_id);
-            })
-            .catch(err => {
-                res.status(500).send({
-                    message:
-                    err.message || "Some error occurred while creating the team."
+    const stageId = req.params.stageId;
+    try{
+        sequelize.transaction(async (t) => {
+            await Promise.all(
+                req.body.data.map(async ele => {
+                    const team = {
+                        teamName: ele.teamName,
+                        teamOrder: ele.teamOrder,
+                        teamMembers: ele.teamMembers,
+                    }
+                    await Team.create(team, {transaction: t})
+                    .then(data => {
+                        console.log('successfully create a team!')
+                        this.addToStage(data.id, stageId);
+                    })
+                    .catch(err => {
+                        res.status(500).send({
+                            message:
+                            err.message || "Some error occurred while creating the team."
+                        })
+                    })
                 })
-            })
+            )
+            return res.send({user:'success'})
         })
-    )
-    return res.send({user:'success'})
+    } catch(err) {
+        console.log('err', err)
+    }
 }
 
 exports.addToStage = (teamId, stageId) => {
@@ -41,7 +49,6 @@ exports.addToStage = (teamId, stageId) => {
                         console.log('Stage not found')
                         return null;
                     }
-
                     team.addStage(stage);
                     return team;
                 })

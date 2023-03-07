@@ -1,5 +1,6 @@
 const db = require('../models');
 const Stage = db.stages;
+const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 
 // Create a stage with no activity id
@@ -39,6 +40,32 @@ exports.editAStage = (req, res) => {
             err.message || 'Some error occurred while edting a stage.'
         })
     })
+}
+
+// Delete a stage(not yet add delete team)
+exports.deleteAStage = (req, res) => {
+    const id = req.params.stageId;
+    Stage.destroy({where: {id: id}})
+}
+
+// Update stages' sequence
+exports.updateSequence = async (req, res) => {
+    try{
+        sequelize.transaction(async (t) => {
+            await Promise.all(
+                req.body.data.map(async (data) => {
+                    const order = {stageOrder: data.stageOrder}
+                    await Stage.update(order, {where: {id: data.id}, transaction: t})
+                    .catch((err) => {
+                        console.log("Error occurred while updating stages' sequence.", err)
+                    })
+                })
+            );
+            return res.send({message: 'success'})
+        })
+    } catch(err) {
+        console.log('err', err)
+    }
 }
 
 // 
