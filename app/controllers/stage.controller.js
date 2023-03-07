@@ -3,9 +3,7 @@ const Stage = db.stages;
 const Op = db.Sequelize.Op;
 
 // Create stages with no activity id
-
-
-exports.create = async (req, res) => {
+exports.createAStage = async (req, res) => {
     var stageArr = [];
     await Promise.all(
         req.body.data.map(async data => {
@@ -14,7 +12,7 @@ exports.create = async (req, res) => {
                 grouping: data.grouping,
                 stageChecked: false,
                 stageOrder: data.stageOrder,
-                mainActivity_id: req.params.activityId 
+                // mainActivity_id: req.params.activityId 
             }
             await Stage.create(stage)
             .then(data => {
@@ -32,5 +30,4 @@ exports.create = async (req, res) => {
         })
     )
     return res.send(stageArr)
-    
 }

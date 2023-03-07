@@ -137,12 +137,25 @@ exports.getAll = (req, res) => {
     .then(async (data) => {
         var dataArr = [];
         await Promise.all(
-            data.map((group) => {
-                const nowDate = new Date();
-                const expiryDate = new Date(group.groupExpiryDate);
-                if(expiryDate > nowDate) {
-                    dataArr.push(group);
-                }
+            data.map(async (group) => {
+                let activityNum = 0;
+                await Activity.findAll({where: {bigGroup_id: group.id}})
+                .then((activities) => {
+                    console.log(activities.length)
+                    activityNum = activities.length;
+                })
+                .then(() => {
+                    group.dataValues.activityNum = activityNum
+                })
+                .then(() => {
+                    console.log(group)
+                    const nowDate = new Date();
+                    const expiryDate = new Date(group.groupExpiryDate);
+                    if(expiryDate > nowDate) {
+                        dataArr.push(group);
+                    }
+                })
+                
             })
         );
         return res.send(dataArr);

@@ -4,7 +4,7 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create new stages in an Activity
-    router.post('/activity/:activityId/stage', stages.create);
+    router.post('/stage', stages.createAStage);
 
     app.use(router);
 }
