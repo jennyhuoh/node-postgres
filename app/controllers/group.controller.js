@@ -56,31 +56,44 @@ exports.create = (req, res) => {
 }
 
 // Update Group content
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
     const id = req.params.groupId;
     const newGroup = {
         groupName: req.body.groupName,
         groupExpiryDate: req.body.groupExpiryDate
     }
     Group.update(newGroup, {where: {id: id}})
-    try {
-        sequelize.transaction(async (t) => {
-            await Group.findByPk(id)
-            .then(async (group) => {
-                await Promise.all(
-                    req.body.members.map(async (member) => {
-                        console.log(member);
-                        await group.setUserProfiles(member.id, { through: {isOwner: member.isOwner} },{transaction: t});
+
+    const memberArr = [];
+    await req.body.members.map((member) => {
+        memberArr.push(member.id);
+    })
+
+    if(memberArr.length === req.body.members.length){
+        try {
+            sequelize.transaction(async (t) => {
+                await Group.findByPk(id)
+                .then(async (group) => {
+                    await group.setUserProfiles(memberArr, {transaction: t})
+                })
+                .then(() => {
+                    sequelize.transaction(async (t2) => {
+                        await Promise.all(
+                            req.body.members.map(async (member) => {
+                                const owner = {isOwner: member.isOwner}
+                                await UserProfile_Group.update(owner, {where: {userProfile_id: member.id, group_id:id}, transaction: t2})
+                            })
+                        );
                     })
-                );
+                })
+                .catch((err) => {
+                    console.log('Error occurred while editing the group.', err)
+                })
+                return res.send({user:'success'})
             })
-            .catch((err) => {
-                console.log('Error occurred while editing the group.', err)
-             })
-            return res.send({user:'success'})
-        })
-    } catch(err) {
-        console.log('err', err)
+        } catch(err) {
+            console.log('err', err)
+        }
     }
 }
 
@@ -184,12 +197,12 @@ exports.delete = async (req, res) => {
                         Stage.destroy({where: {mainActivity_id: a.dataValues.id}, transaction: t})
                     })
                 );
+                await Activity.destroy({where: {bigGroup_id: id}})
             })
         }catch(err){
             console.log('err', err)
         }
     })
-    Activity.destroy({where: {bigGroup_id: id}})
     Group.destroy({where: {id: id}})
     .then(num => {
         if(num === 1) {
