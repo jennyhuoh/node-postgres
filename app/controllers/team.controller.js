@@ -38,22 +38,51 @@ exports.create = async (req, res) => {
 
 exports.addToStage = (teamId, stageId) => {
     return Team.findByPk(teamId)
-        .then((team) => {
-            if(!team){
-                console.log('Team not found');
-                return null;
-            }
-            return Stage.findByPk(stageId)
-                .then((stage) => {
-                    if(!stage) {
-                        console.log('Stage not found')
-                        return null;
-                    }
-                    team.addStage(stage);
-                    return team;
-                })
-        })
-        .catch((err) => {
-            console.log('Error occurred while adding team to stage: ', err)
-        })
+    .then((team) => {
+        if(!team){
+            console.log('Team not found');
+            return null;
+        }
+        return Stage.findByPk(stageId)
+            .then((stage) => {
+                if(!stage) {
+                    console.log('Stage not found')
+                    return null;
+                }
+                team.addStage(stage);
+                return team;
+            })
+    })
+    .catch((err) => {
+        console.log('Error occurred while adding team to stage: ', err)
+    })
+}
+
+// Print teams for a stage
+exports.getTeams = (req, res) => {
+    const stageId = req.params.stageId;
+    Stage.findByPk(stageId, {
+        include: [
+            {
+                model: Team,
+                as: 'teams',
+                attributes: ['teamName', 'teamOrder', 'teamMembers'],
+                through: {
+                    attributes: [],
+                },
+            },
+        ],
+    })
+    .then((data) => {
+        let newTeams = data.dataValues.teams;
+        newTeams = newTeams.sort(
+            (a, b) => a.teamOrder - b.teamOrder
+        )
+        data.dataValues.teams = newTeams;
+        console.log(data)
+        res.send(data)
+    })
+    .catch((err) => {
+        console.log('Error occurred while getting teams for a stage.', err);
+    })
 }

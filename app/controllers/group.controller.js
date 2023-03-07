@@ -27,25 +27,32 @@ exports.create = (req, res) => {
     .then(data => {
         console.log('successfully create a group!')
         res.send(data)
-
-        // 建立group的member&host
-        req.body.members.forEach((member) => {
-            const userProfile_group = {
-                isOwner: member.isOwner,
-                group_id: data.id,
-                userProfile_id: member.id
-            }
-            UserProfile_Group.create(userProfile_group)
-            .then(() => {
-                console.log('UserProfile Group created.')
+        try{
+            sequelize.transaction(async (t) => {
+                await Promise.all(
+                    // 建立group的member&host
+                    req.body.members.map(async member => {
+                        const userProfile_group = {
+                            isOwner: member.isOwner,
+                            group_id: data.id,
+                            userProfile_id: member.id
+                        }
+                        await UserProfile_Group.create(userProfile_group, {transaction: t})
+                        .then(() => {
+                            console.log('UserProfile Group created.')
+                        })
+                        .catch(err => {
+                            res.status(500).send({
+                                message:
+                                err.message || 'Some error.'
+                            })
+                        })
+                    })
+                )
             })
-            .catch(err => {
-                res.status(500).send({
-                    message:
-                    err.message || 'Some error.'
-                })
-            })
-        })
+        } catch(err) {
+            console.log('err', err)
+        }
     })
     .catch(err => {
         res.status(500).send({
@@ -155,7 +162,6 @@ exports.getAll = (req, res) => {
                         dataArr.push(group);
                     }
                 })
-                
             })
         );
         return res.send(dataArr);
