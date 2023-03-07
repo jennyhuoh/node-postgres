@@ -3,8 +3,10 @@ module.exports = app => {
 
     var router = require('express').Router();
 
-    // Create new stages in an Activity
+    // Create a stage
     router.post('/stage', stages.createAStage);
+    // Edit a stage
+    router.post('/stage/:stageId', stages.editAStage);
 
     app.use(router);
 }
