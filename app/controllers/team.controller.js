@@ -58,7 +58,7 @@ exports.addToStage = (teamId, stageId) => {
     })
 }
 
-// Print teams for a stage
+// Print teams from a stage
 exports.getTeams = (req, res) => {
     const stageId = req.params.stageId;
     Stage.findByPk(stageId, {
@@ -66,7 +66,7 @@ exports.getTeams = (req, res) => {
             {
                 model: Team,
                 as: 'teams',
-                attributes: ['teamName', 'teamOrder', 'teamMembers'],
+                attributes: ['id', 'teamName', 'teamOrder', 'teamMembers'],
                 through: {
                     attributes: [],
                 },
@@ -83,6 +83,33 @@ exports.getTeams = (req, res) => {
         res.send(data)
     })
     .catch((err) => {
-        console.log('Error occurred while getting teams for a stage.', err);
+        console.log('Error occurred while getting teams from a stage.', err);
     })
+}
+
+// Edit teams from a stage
+exports.update = (req, res) => {
+    try{
+        sequelize.transaction(async (t) => {
+            await Promise.all(
+                req.body.data.map(async ele => {
+                    const team = {
+                        teamName: ele.teamName,
+                        teamOrder: ele.teamOrder,
+                        teamMembers: ele.teamMembers,
+                    }
+                    await Team.update(team, {where: {id: ele.id}, transaction: t})
+                    .catch(err => {
+                        res.status(500).send({
+                            message:
+                            err.message || "Some error occurred while editing the team."
+                        })
+                    })
+                })
+            )
+            return res.send({user:'success'})
+        })
+    } catch(err) {
+        console.log('err', err)
+    } 
 }

@@ -4,8 +4,10 @@ module.exports = app => {
 
     // Create new teams in a stage
     router.post('/stage/:stageId/teams', teams.create);
-    // Get teams for a stage
+    // Get teams from a stage
     router.get('/stage/:stageId/teams', teams.getTeams);
+    // Edit teams grom a stage
+    router.post('/teams', teams.update);
 
     app.use(router);
 }   

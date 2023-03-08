@@ -1,5 +1,6 @@
 const db = require('../models');
 const Stage = db.stages;
+const Team = db.teams;
 const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 
@@ -37,7 +38,7 @@ exports.editAStage = (req, res) => {
     .catch(err => {
         res.status(500).send({
             message:
-            err.message || 'Some error occurred while edting a stage.'
+            err.message || 'Some error occurred while editing a stage.'
         })
     })
 }
@@ -45,7 +46,43 @@ exports.editAStage = (req, res) => {
 // Delete a stage(not yet add delete team)
 exports.deleteAStage = (req, res) => {
     const id = req.params.stageId;
-    Stage.destroy({where: {id: id}})
+    Stage.findByPk(id, {
+        include: [
+            {
+                model: Team,
+                as: 'teams',
+                attributes: ['id'],
+                through: {
+                    attributes: [],
+                },
+            },
+        ],
+    })
+    .then(async (data) => {
+        try{
+            sequelize.transaction(async (t) => {
+                await Promise.all(
+                    data.dataValues.teams.map(async team => {
+                        await Team.destroy({where: {id: team.id}, transaction: t})
+                    })
+                );
+            })
+        } catch(err) {
+            console.log('err', err);
+        }
+    })
+    .then(() => {
+        Stage.destroy({where: {id: id}})
+        .then(() => {
+            res.send({message: 'successfully deleted!'})
+        })
+        .catch((err) => {
+            res.status(500).send({
+                message: 
+                err.message || 'Some error occurred while deleting the stage.'
+            })
+        })
+    })
 }
 
 // Update stages' sequence
