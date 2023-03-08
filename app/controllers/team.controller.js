@@ -9,6 +9,7 @@ exports.create = async (req, res) => {
     const stageId = req.params.stageId;
     try{
         sequelize.transaction(async (t) => {
+            const teamIdArr = [];
             await Promise.all(
                 req.body.data.map(async ele => {
                     const team = {
@@ -18,7 +19,8 @@ exports.create = async (req, res) => {
                     }
                     await Team.create(team, {transaction: t})
                     .then(data => {
-                        console.log('successfully create a team!')
+                        teamIdArr.push(data.id);
+                        console.log('successfully created a team!')
                         this.addToStage(data.id, stageId);
                     })
                     .catch(err => {
@@ -29,7 +31,7 @@ exports.create = async (req, res) => {
                     })
                 })
             )
-            return res.send({user:'success'})
+            res.send(teamIdArr);
         })
     } catch(err) {
         console.log('err', err)
