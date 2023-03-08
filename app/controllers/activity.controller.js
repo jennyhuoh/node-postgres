@@ -1,6 +1,7 @@
 const db = require('../models');
 const Activity = db.activities;
 const Stage = db.stages;
+const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 
 function calculateExpiryDate(date){
@@ -21,10 +22,21 @@ exports.create = (req, res) => {
         activityExpiryDate: calculateExpiryDate(req.body.activityStartDate),
         bigGroup_id: req.params.groupId
     }
-
     Activity.create(activity)
-    .then(data => {
-        res.send(data);
+    .then(async data => {
+        // make association between activity and stages
+        try{
+            sequelize.transaction(async (t) => {
+                await Promise.all(
+                    req.body.stageId.map(async (id) => {
+                        await Stage.update({mainActivity_id: data.dataValues.id}, {where: {id: id}, transaction: t})
+                    })
+                );
+                return res.send(data);
+            })
+        } catch(err) {
+            console.log('err', err);
+        }
     })
     .catch(err => {
         res.status(500).send({
@@ -44,6 +56,17 @@ exports.update = (req, res) => {
     }
     Activity.update(newActivity, {where: {id: id}})
     .then(() => {
+        try{
+            sequelize.transaction(async (t) => {
+                await Promise.all(
+                    req.body.stageId.map(async (stageId) => {
+                        await Stage.update({mainActivity_id: id}, {where: {id: stageId}, transaction: t})
+                    })
+                );
+            })
+        } catch(err) {
+            console.log('err', err);
+        }
         res.send({message: 'successfully updated the activity!'})
     })
     .catch((err) => {
@@ -51,7 +74,7 @@ exports.update = (req, res) => {
     })
 }
 
-// Print an activity
+// Print an activity(with stages)
 exports.getOne = (req, res) => {
     const id = req.params.activityId;
     Activity.findOne({where: {id: id}})

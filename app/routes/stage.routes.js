@@ -7,7 +7,7 @@ module.exports = app => {
     router.post('/stage', stages.createAStage);
     // Edit a stage
     router.post('/stage/:stageId', stages.editAStage);
-    // Updata stages' sequence
+    // Update stages' sequence
     router.post('/stages', stages.updateSequence);
     // Delete a stage
     router.delete('/stage/:stageId', stages.deleteAStage)

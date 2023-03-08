@@ -43,7 +43,8 @@ exports.editAStage = (req, res) => {
     })
 }
 
-// Delete a stage(not yet add delete team)
+// Delete a stage(not yet make sure there is a team template)
+// if(team in a template)取消關聯即可 else destroy
 exports.deleteAStage = (req, res) => {
     const id = req.params.stageId;
     Stage.findByPk(id, {
@@ -105,32 +106,4 @@ exports.updateSequence = async (req, res) => {
     }
 }
 
-// 
-// exports.createAStage = async (req, res) => {
-//     var stageArr = [];
-//     await Promise.all(
-//         req.body.data.map(async data => {
-//             const stage = {
-//                 stageName: data.stageName,
-//                 grouping: data.grouping,
-//                 stageChecked: false,
-//                 stageOrder: data.stageOrder,
-//                 mainActivity_id: req.params.activityId 
-//             }
-//             await Stage.create(stage)
-//             .then(data => {
-//                 console.log('successfully added a stage!')
-//                 if(stage.grouping){
-//                     stageArr.push(data.dataValues)
-//                 }
-//             })
-//             .catch(err => {
-//                 res.status(500).send({
-//                     message:
-//                     err.message || 'Some error occurred while creating the stage.'
-//                 })
-//             })
-//         })
-//     )
-//     return res.send(stageArr)
-// }
+// Print stages in an activity
