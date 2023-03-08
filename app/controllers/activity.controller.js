@@ -74,10 +74,18 @@ exports.update = (req, res) => {
     })
 }
 
-// Print an activity(with stages)
+// Print an activity
 exports.getOne = (req, res) => {
     const id = req.params.activityId;
-    Activity.findOne({where: {id: id}})
+    Activity.findByPk(id, {
+        include: [
+            {
+                model: Stage,
+                as: 'stagesForActivity',
+                attributes: ['id', 'stageName', 'grouping', 'stageOrder'],
+            },
+        ],
+    })
     .then(activity => {
         res.send(activity)
     })

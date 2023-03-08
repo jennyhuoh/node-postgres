@@ -82,5 +82,16 @@ db.teamTemplates.belongsTo(db.userProfiles, {
     as: 'usersForTeamplates'
 })
 
+// 一個teamTemplate有許多team，一個team只屬於一個teamTemplate
+db.teamTemplates.hasMany(db.teams, {
+    foreignKey: 'teamTemplate_id',
+    as: 'teamsForTemplate',
+}) 
+db.teams.belongsTo(db.teamTemplates, {
+    foreignKey: 'teamTemplate_id',
+    as: 'templatesForTeams',
+})
+
+
 module.exports = db;
 
