@@ -4,6 +4,10 @@ module.exports = app => {
 
     // Create a team template
     router.post('/teamTemplate', teamTemplate.createForUser);
+    // Get usable template
+    router.get('/group/:groupId/activity/stage/teamTemplate', teamTemplate.getTemplates);
+    // Give template's team and members
+    router.post('/teamTemplate/:teamTemplateId', teamTemplate.giveTeamMembers);
 
     app.use(router);
 }
