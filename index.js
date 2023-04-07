@@ -18,33 +18,134 @@ const io = require('socket.io')(server, {
     }
 })
 
-const users = {};
-const socketToRoom = {};
-
+var users = {};
+var socketToRoom = {};
+var userInfo = []
 function findNowRoom(socket) {
     return Object.keys(socket.rooms).find(room => {
         return room!== socket.id
     })
 }
-
+var socketUserMapping = {}
+// Sockets
 io.on('connection', (socket) => {
+    console.log('new connection', socket.id);
 // 這裡開始是mainRoom
-    socket.on('joinRoom', roomID => {
-        if(users[roomID]) {
-            users[roomID].push(socket.id);
-        } else {
-            users[roomID] = [socket.id];
-        }
-        socketToRoom[socket.id] = roomID;
-        const usersInThisRoom = users[roomID].filter(id => id!== socket.id);
-        socket.emit('allUsers', usersInThisRoom);
+    // socket.on('joinRoom', roomID => {
+    //     console.log('roomID', roomID)
+    //     console.log('socket.id', socket.id)
+    //     if(users[roomID]) {
+    //         users[roomID].push(socket.id);
+    //     } else {
+    //         users[roomID] = [socket.id];
+    //     }
+    //     socketToRoom[socket.id] = roomID;
+    //     const usersInThisRoom = users[roomID].filter(id => id !== socket.id);
+    //     socket.emit('allUsers', usersInThisRoom);
+    // })
+
+
+    socket.on('joinRoom', async ({roomID, user}) => {
+        socketUserMapping[socket.id] = user
+        // new Map
+        const peers = Array.from(io.sockets.adapter.rooms.get(roomID) || []) // clients
+        console.log('socketUserMapping', socketUserMapping)
+        peers.forEach(peerId => {
+            io.to(peerId).emit('addPeer', {
+                peerId: socket.id,
+                createOffer: false,
+                user
+            })
+            socket.emit('addPeer', {
+                peerId: peerId,
+                createOffer: true,
+                user: socketUserMapping[peerId]
+            })
+        })
+        socket.join(roomID);
+        console.log('peers', peers)
     })
+    // Handle relay ice
+    socket.on('relayIce', ({peerId, icecandidate}) => {
+        io.to(peerId).emit('iceCandidate', {
+            peerId: socket.id,
+            icecandidate,
+        })
+    })
+    // Handle relay sdp (session description)
+    socket.on('relaySDP', ({peerId, sessionDescription}) => {
+        io.to(peerId).emit('sessionDescription', {
+            peerId: socket.id,
+            sessionDescription
+        })
+    })
+    // Leaving the room
+    const leaveRoom = ({roomID}) => {
+        const {rooms} = socket;
+        Array.from(rooms).forEach(roomId => {
+            const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+            peers.forEach(peerId => {
+                io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id]?.id})
+                socket.emit('removePeer', {peerId: peerId, userId: socketUserMapping[peerId]?.id})
+            })
+            socket.leave(roomID)
+        })
+        delete socketUserMapping[socket.id]
+    }
+    socket.on('leave', leaveRoom)
+
+    // socket.on('joinRoom', async (info) => {
+    //     socket.join(info.roomID)
+    //     socket.emit('addRoom', '您已加入聊天室!')
+    //     io.sockets.to(info.roomID).emit('addRoomBroadcast',`${info.userName} 加入聊天室了!`);
+    //     const nowRoom = findNowRoom(socket);
+    //     if(nowRoom) {
+    //         socket.leave(nowRoom)
+    //     }
+    //     var previousSocket = 0;
+    //     const newInfo = {
+    //         roomID: info.roomID,
+    //         userName: info.userName,
+    //         socketID: socket.id
+    //     }
+    //     if(userInfo.length!==0){
+    //         await Promise.all(userInfo.map(async (user) => {
+    //             if(user.userName === newInfo.userName && user.roomID === newInfo.roomID) {
+    //                 previousSocket = await user.socketID;
+    //                 delete socketToRoom[previousSocket];
+    //             }
+    //         }))
+    //     }
+    //     userInfo.push(newInfo);
+    //     if(users[newInfo.roomID]) {
+    //         users[newInfo.roomID].push(socket.id);
+    //     } else {
+    //         users[newInfo.roomID] = [socket.id];
+    //     }
+    //     if(previousSocket !== 0) {
+    //         const a = await users[newInfo.roomID].filter(id => id !== previousSocket)
+    //         users[newInfo.roomID] = await a;
+    //     }
+    //     socketToRoom[socket.id] = newInfo.roomID;
+
+    //     console.log('roomID', newInfo.roomID)
+    //     console.log('socket.id', socket.id)
+    //     console.log('users', users)
+    //     console.log('socketToRoom', socketToRoom)
+    //     const usersInThisRoom = await users[newInfo.roomID].filter(id => id !== socket.id);
+    //     console.log('userInThisRoom', usersInThisRoom)
+    //     userInfo = userInfo.filter(item => item.socketID !== previousSocket)
+    //     console.log('userInfo', userInfo)
+    //     socket.emit('allUsers', usersInThisRoom);
+    // })
+
     socket.on('sendingSignal', payload =>{
-        io.to(payload.userToSignal).emit('userJoined', {signal: payload.signal, callerId: payload.callerId});
+        io.to(payload.userToSignal).emit('userJoined', {signal: payload.signal, callerID: payload.callerID});
     })
     socket.on('returningSignal', payload =>{
-        io.to(payload.callerId).emit('receivingReturnedSignal', {signal: payload.signal, id:socket.id});
+        io.to(payload.callerID).emit('receivingReturnedSignal', {signal: payload.signal, id:socket.id});
     })
+
     // 這裡開始是audioRoom
     console.log('success connect!')
     socket.on('getMessage', message => {
@@ -89,14 +190,31 @@ io.on('connection', (socket) => {
         socket.emit('disConnection', '')
     })
 
-    socket.on('disconnect', () => {
-        const roomID = socketToRoom[socket.id];
-        let room = users[roomID];
+    socket.on('disconnecttt', async (payload) => {
+        const roomID = await socketToRoom[socket.id];
+        let room = await users[roomID];
         if(room) {
-            room = room.filter(id => id!== socket.id);
-            users[roomID] = room;
+            room = await room.filter(id => id!== socket.id);
+            users[roomID] = await room;
         }
+        console.log('roomID', roomID)
+        socket.broadcast.to(roomID).emit('userLeft', {
+            message: `${payload}離開了`,
+            socketID: socket.id
+        });
+        // socket.emit('userLeft', {
+        //     message: `${payload}離開了`,
+        //     socketID: socket.id
+        // });
+        
+        userInfo = userInfo.filter(info => info.socketID !== socket.id)
+        delete socketToRoom[socket.id]
         console.log('disconnection')
+    })
+    socket.on('change', (payload) => {
+        console.log('payload', payload)
+        socket.broadcast.to(payload[payload.length - 1].room).emit('changge', payload);
+        // socket.emit('changge', payload);
     })
 })
 

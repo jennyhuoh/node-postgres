@@ -10,7 +10,7 @@ module.exports = app => {
     // Get a group
     router.get('/group/:groupId', group.getOne);
     // Get all groups
-    router.get('/groups', group.getAll);
+    router.get('/groups/:userId', group.getAll);
     // Get all history groups
     router.get('/history/groups', group.getAllHistory);
     // Delete a group

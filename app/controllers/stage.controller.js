@@ -6,6 +6,7 @@ const Op = db.Sequelize.Op;
 
 // Create a stage with no activity id
 exports.createAStage = (req, res) => {
+    // console.log(req.body);
     const stage = {
         stageName: req.body.stageName,
         grouping: req.body.grouping,
@@ -14,6 +15,7 @@ exports.createAStage = (req, res) => {
     }
     Stage.create(stage)
     .then(data => {
+        // console.log(data)
         res.send(data)
     })
     .catch(err => {
@@ -88,11 +90,12 @@ exports.deleteAStage = (req, res) => {
 
 // Update stages' sequence
 exports.updateSequence = async (req, res) => {
+    console.log('body', req.body)
     try{
         sequelize.transaction(async (t) => {
             await Promise.all(
-                req.body.data.map(async (data) => {
-                    const order = {stageOrder: data.stageOrder}
+                req.body.map(async (data) => {
+                    const order = {stageOrder: data.order}
                     await Stage.update(order, {where: {id: data.id}, transaction: t})
                     .catch((err) => {
                         console.log("Error occurred while updating stages' sequence.", err)

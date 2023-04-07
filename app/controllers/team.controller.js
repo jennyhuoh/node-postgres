@@ -7,21 +7,23 @@ const Op = db.Sequelize.Op;
 // Create and save new Teams for a stage
 exports.create = async (req, res) => {
     const stageId = req.params.stageId;
-    try{
-        sequelize.transaction(async (t) => {
+    // try{
+    //     sequelize.transaction(async (t) => {
+            // console.log('body', req.body)
             const teamIdArr = [];
             await Promise.all(
-                req.body.data.map(async ele => {
+                req.body.map(async ele => {
                     const team = {
                         teamName: ele.teamName,
                         teamOrder: ele.teamOrder,
                         teamMembers: ele.teamMembers,
                     }
-                    await Team.create(team, {transaction: t})
-                    .then(data => {
-                        teamIdArr.push(data.id);
+                    await Team.create(team)
+                    .then(async (data) => {
+                        teamIdArr.push(data.dataValues.id);
                         console.log('successfully created a team!')
-                        this.addToStage(data.id, stageId);
+                        // console.log('dataId', data.dataValues.id)
+                        await this.addToStage(data.dataValues.id, stageId);
                     })
                     .catch(err => {
                         res.status(500).send({
@@ -32,14 +34,14 @@ exports.create = async (req, res) => {
                 })
             )
             res.send(teamIdArr);
-        })
-    } catch(err) {
-        console.log('err', err)
-    }
+    //     })
+    // } catch(err) {
+    //     console.log('err', err)
+    // }
 }
 
 exports.addToStage = (teamId, stageId) => {
-    return Team.findByPk(teamId)
+    return Team.findOne({where: {id: teamId}})
     .then((team) => {
         if(!team){
             console.log('Team not found');

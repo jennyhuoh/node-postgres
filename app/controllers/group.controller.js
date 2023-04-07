@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Create and save new Group
 exports.create = (req, res) => {
+    console.log('req', req.body);
     // Validate request
     if(!req.body.groupName){
         res.status(400).send({
@@ -25,8 +26,7 @@ exports.create = (req, res) => {
 
     Group.create(group)
     .then(data => {
-        console.log('successfully create a group!')
-        res.send(data)
+        console.log('successfully created a group!')
         try{
             sequelize.transaction(async (t) => {
                 await Promise.all(
@@ -49,6 +49,7 @@ exports.create = (req, res) => {
                         })
                     })
                 )
+                res.send({message:'success'})
             })
         } catch(err) {
             console.log('err', err)
@@ -69,26 +70,27 @@ exports.update = async (req, res) => {
         groupName: req.body.groupName,
         groupExpiryDate: req.body.groupExpiryDate
     }
-    Group.update(newGroup, {where: {id: id}})
+    Group.update(newGroup, {where: {groupMeetingId: id}})
 
     const memberArr = [];
     await req.body.members.map((member) => {
         memberArr.push(member.id);
     })
-
+    var groupID;
     if(memberArr.length === req.body.members.length){
         try {
             sequelize.transaction(async (t) => {
-                await Group.findByPk(id)
+                await Group.findOne({where: {groupMeetingId: id}})
                 .then(async (group) => {
                     await group.setUserProfiles(memberArr, {transaction: t})
+                    groupID = await group.dataValues.id;
                 })
                 .then(() => {
                     sequelize.transaction(async (t2) => {
                         await Promise.all(
                             req.body.members.map(async (member) => {
                                 const owner = {isOwner: member.isOwner}
-                                await UserProfile_Group.update(owner, {where: {userProfile_id: member.id, group_id:id}, transaction: t2})
+                                await UserProfile_Group.update(owner, {where: {userProfile_id: member.id, group_id: groupID}, transaction: t2})
                             })
                         );
                     })
@@ -107,7 +109,8 @@ exports.update = async (req, res) => {
 // Print a Group
 exports.getOne = (req, res) => {
     const id = req.params.groupId;
-    Group.findByPk(id, {
+    Group.findOne({
+        where: {groupMeetingId: id},
         include: [
             {
                 model: UserProfile,
@@ -119,8 +122,53 @@ exports.getOne = (req, res) => {
             },
         ],
     })
-    .then((data) => {
-        res.send(data)
+    .then(async (data) => {
+        var newData = await data.dataValues;
+        var member;
+        var memberResult = []
+        await UserProfile_Group.findOne({where:{group_id:data.dataValues.id, isOwner:true}})
+        .then(async (d) => {
+            member = await newData.userProfiles.filter(profile => profile.id !== d.dataValues.userProfile_id)
+            await UserProfile.findByPk(d.dataValues.userProfile_id)
+            .then(owner => {
+                newData.owner = owner.dataValues;
+                // newData.member = member;
+            })
+            .then(async () => {
+                await Promise.all(
+                    member.map(m => {
+                        const mm = {
+                            id: m.id,
+                            value: m.userEmail,
+                            label: m.userName
+                        }
+                        memberResult.push(mm)
+                    })
+                );
+                newData.member = memberResult;
+            })
+        })
+        .then(async () => {
+            var allUser = [];
+            await UserProfile.findAll()
+            .then(async (data) => {
+                const a = await data.filter(d => d.id !== newData.owner.id)
+                await Promise.all(
+                    a.map((user) => {
+                        const d = {
+                            id: user.id,
+                            value: user.userEmail,
+                            label: user.userName
+                        }
+                        allUser.push(d)
+                    })
+                )
+                newData.all = allUser;
+            })
+        })
+        .then(() => {
+            res.send(newData)
+        })
     })
     .catch((err) => {
         console.log('Error occurred while getting a group.', err);
@@ -129,6 +177,9 @@ exports.getOne = (req, res) => {
 
 // Print all alive Group
 exports.getAll = (req, res) => {
+    var userId = req.params.userId;
+    var dataArr = [];
+    var dataArrResult = [];
     Group.findAll({
         include: [
             {
@@ -142,20 +193,19 @@ exports.getAll = (req, res) => {
         ],
     })
     .then(async (data) => {
-        var dataArr = [];
         await Promise.all(
             data.map(async (group) => {
                 let activityNum = 0;
                 await Activity.findAll({where: {bigGroup_id: group.id}})
                 .then((activities) => {
-                    console.log(activities.length)
+                    // console.log(activities.length)
                     activityNum = activities.length;
                 })
                 .then(() => {
                     group.dataValues.activityNum = activityNum
                 })
                 .then(() => {
-                    console.log(group)
+                    // console.log(group)
                     const nowDate = new Date();
                     const expiryDate = new Date(group.groupExpiryDate);
                     if(expiryDate > nowDate) {
@@ -164,7 +214,23 @@ exports.getAll = (req, res) => {
                 })
             })
         );
-        return res.send(dataArr);
+    })
+    .then(async () => {
+        await Promise.all(
+            dataArr.map(async (group) => {
+                for(const user of group.userProfiles) {
+                    // console.log('1',user.id)
+                    // console.log('2', userId)
+                    if(user.id == userId){
+                        // console.log('in')
+                        dataArrResult.push(group);
+                        break;
+                    }
+                }
+            })
+        );
+        // console.log('result', dataArrResult);
+        return res.send(dataArrResult);
     })
     .catch((err) => {
         console.log('Error while retrieving Groups: ', err);
@@ -207,22 +273,26 @@ exports.getAllHistory = (req, res) => {
 // Delete a Group
 exports.delete = async (req, res) => {
     const id = req.params.groupId;
-    await Activity.findAll({where: {bigGroup_id: id}})
-    .then((activity) => {
-        try{
-            sequelize.transaction(async (t) => {
-                await Promise.all(
-                    activity.map(async (a) => {
-                        Stage.destroy({where: {mainActivity_id: a.dataValues.id}, transaction: t})
-                    })
-                );
-                await Activity.destroy({where: {bigGroup_id: id}})
-            })
-        }catch(err){
-            console.log('err', err)
-        }
+    await Group.findOne({where: {groupMeetingId: id}})
+    .then(async (group) => {
+        await Activity.findAll({where: {bigGroup_id: group.dataValues.id}})
+        .then((activity) => {
+            try{
+                sequelize.transaction(async (t) => {
+                    await Promise.all(
+                        activity.map(async (a) => {
+                            Stage.destroy({where: {mainActivity_id: a.dataValues.id}, transaction: t})
+                        })
+                    );
+                    await Activity.destroy({where: {bigGroup_id: group.dataValues.id}})
+                })
+            }catch(err){
+                console.log('err', err)
+            }
+        })
     })
-    Group.destroy({where: {id: id}})
+ 
+    Group.destroy({where: {groupMeetingId: id}})
     .then(num => {
         if(num === 1) {
             res.send({message: 'succesfully deleted!'})
