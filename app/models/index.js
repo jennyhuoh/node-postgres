@@ -27,6 +27,7 @@ db.activities = require('./activity.model')(sequelize, Sequelize);
 db.stages = require('./stage.model')(sequelize, Sequelize);
 db.teams = require('./team.model')(sequelize, Sequelize);
 db.teamTemplates = require('./teamTemplate.model')(sequelize, Sequelize);
+db.records = require('./record.model')(sequelize, Sequelize);
 
 // group有許多member，user有許多group
 db.groups.belongsToMany(db.userProfiles, {
@@ -92,6 +93,25 @@ db.teams.belongsTo(db.teamTemplates, {
     as: 'templatesForTeams',
 })
 
+// 一個stage有許多record，一個record只屬於一個stage
+db.stages.hasMany(db.records, {
+    foreignKey: 'stage_id_record',
+    as: 'stagesForRecord',
+})
+db.records.belongsTo(db.stages, {
+    foreignKey: 'stage_id_record',
+    as: 'recordsForStages'
+})
+
+// 一個team有許多record，一個record只屬於一個team
+db.teams.hasMany(db.records, {
+    foreignKey: 'team_id_record',
+    as: 'teamsForRecord',
+})
+db.records.belongsTo(db.teams, {
+    foreignKey: 'team_id_record',
+    as: 'recordsForTeams'
+})
 
 module.exports = db;
 

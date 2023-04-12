@@ -79,8 +79,22 @@ io.on('connection', (socket) => {
             sessionDescription
         })
     })
+    // Handle mute/unmute
+    socket.on('mute', ({roomId, userId}) => {
+        const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+        peers.forEach(peerId => {
+            io.to(peerId).emit('mute', {peerId:socket.id, userId})
+        })
+    })
+    socket.on('unMute', ({roomId, userId}) => {
+        const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+        peers.forEach(peerId => {
+            io.to(peerId).emit('unMute', {peerId:socket.id, userId})
+        })
+    })
     // Leaving the room
     const leaveRoom = ({roomID}) => {
+        console.log('leave roomID:', roomID)
         const {rooms} = socket;
         Array.from(rooms).forEach(roomId => {
             const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
@@ -91,132 +105,13 @@ io.on('connection', (socket) => {
             socket.leave(roomID)
         })
         delete socketUserMapping[socket.id]
+        console.log('leave!', socketUserMapping)
     }
     socket.on('leave', leaveRoom)
-
-    // socket.on('joinRoom', async (info) => {
-    //     socket.join(info.roomID)
-    //     socket.emit('addRoom', '您已加入聊天室!')
-    //     io.sockets.to(info.roomID).emit('addRoomBroadcast',`${info.userName} 加入聊天室了!`);
-    //     const nowRoom = findNowRoom(socket);
-    //     if(nowRoom) {
-    //         socket.leave(nowRoom)
-    //     }
-    //     var previousSocket = 0;
-    //     const newInfo = {
-    //         roomID: info.roomID,
-    //         userName: info.userName,
-    //         socketID: socket.id
-    //     }
-    //     if(userInfo.length!==0){
-    //         await Promise.all(userInfo.map(async (user) => {
-    //             if(user.userName === newInfo.userName && user.roomID === newInfo.roomID) {
-    //                 previousSocket = await user.socketID;
-    //                 delete socketToRoom[previousSocket];
-    //             }
-    //         }))
-    //     }
-    //     userInfo.push(newInfo);
-    //     if(users[newInfo.roomID]) {
-    //         users[newInfo.roomID].push(socket.id);
-    //     } else {
-    //         users[newInfo.roomID] = [socket.id];
-    //     }
-    //     if(previousSocket !== 0) {
-    //         const a = await users[newInfo.roomID].filter(id => id !== previousSocket)
-    //         users[newInfo.roomID] = await a;
-    //     }
-    //     socketToRoom[socket.id] = newInfo.roomID;
-
-    //     console.log('roomID', newInfo.roomID)
-    //     console.log('socket.id', socket.id)
-    //     console.log('users', users)
-    //     console.log('socketToRoom', socketToRoom)
-    //     const usersInThisRoom = await users[newInfo.roomID].filter(id => id !== socket.id);
-    //     console.log('userInThisRoom', usersInThisRoom)
-    //     userInfo = userInfo.filter(item => item.socketID !== previousSocket)
-    //     console.log('userInfo', userInfo)
-    //     socket.emit('allUsers', usersInThisRoom);
-    // })
-
-    socket.on('sendingSignal', payload =>{
-        io.to(payload.userToSignal).emit('userJoined', {signal: payload.signal, callerID: payload.callerID});
-    })
-    socket.on('returningSignal', payload =>{
-        io.to(payload.callerID).emit('receivingReturnedSignal', {signal: payload.signal, id:socket.id});
-    })
-
-    // 這裡開始是audioRoom
-    console.log('success connect!')
-    socket.on('getMessage', message => {
-        socket.emit('getMessage', message)
-    })
-    socket.on('getMessageAll', message => {
-        io.sockets.emit('getMessageAll', message)
-    })
-    socket.on('getMessageLess', message => {
-        socket.broadcast.emit('getMessageLess', message)
-    })
-
-    socket.on('addRoom', room => {
-        // const nowRoom = Object.keys(socket.rooms).find(room => {
-        //     return room !== socket.id
-        // })
-        const nowRoom = findNowRoom(socket);
-        if(nowRoom) {
-            socket.leave(nowRoom)
-        }
-
-        socket.join(room)
-        // 發送給同一個房間除了自己以外的 Client
-        socket.to(room).emit('addRoom', '有新人加入聊天室!')
-        // 發送給在同一房間中的所有 Client
-        io.sockets.in(room).emit('addRoom', '已加入聊天室!')
-    })
-
-    socket.on('peerconnectSignaling', message => {
-        console.log('接收資料: ', message);
-
-        const nowRoom = findNowRoom(socket);
-        socket.to(nowRoom).emit('peerconnectSignaling', message)
-    })
-
-    socket.on('disConnection', () => {
-        // const room = Object.keys(socket.rooms).find(room => {
-        //     return room !== socket.id
-        // })
-        // await socket.to(room).emit('leaveRoom', `${message} 已離開聊天!`)
-        console.log(`socket 用戶離開 ${socket.id}`)
-        socket.emit('disConnection', '')
-    })
-
-    socket.on('disconnecttt', async (payload) => {
-        const roomID = await socketToRoom[socket.id];
-        let room = await users[roomID];
-        if(room) {
-            room = await room.filter(id => id!== socket.id);
-            users[roomID] = await room;
-        }
-        console.log('roomID', roomID)
-        socket.broadcast.to(roomID).emit('userLeft', {
-            message: `${payload}離開了`,
-            socketID: socket.id
-        });
-        // socket.emit('userLeft', {
-        //     message: `${payload}離開了`,
-        //     socketID: socket.id
-        // });
-        
-        userInfo = userInfo.filter(info => info.socketID !== socket.id)
-        delete socketToRoom[socket.id]
-        console.log('disconnection')
-    })
-    socket.on('change', (payload) => {
-        console.log('payload', payload)
-        socket.broadcast.to(payload[payload.length - 1].room).emit('changge', payload);
-        // socket.emit('changge', payload);
-    })
 })
+
+
+
 
 // server.listen(port, () => {
 //     console.log('listening on *: 3001')
@@ -259,6 +154,22 @@ require('./app/routes/activity.routes')(app);
 require('./app/routes/stage.routes')(app);
 require('./app/routes/team.routes')(app);
 require('./app/routes/teamTemplate.routes')(app);
+
+var multer = require('multer');
+var upload = multer();
+const records = require('./app/controllers/record.controller');
+// Create record
+app.post('/stage/:stageId/team/:teamId/record', upload.any(), records.createRecord)
+
+
+
+
+
+
+
+
+
+
 
 
 app.get('/get-token', (req, res) => {
