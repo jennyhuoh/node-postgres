@@ -160,7 +160,8 @@ var upload = multer();
 const records = require('./app/controllers/record.controller');
 // Create record
 app.post('/stage/:stageId/team/:teamId/record', upload.any(), records.createRecord)
-
+// Get records
+app.get('/stage/:stageId/team/:teamId/records', records.getRecords);
 
 
 

@@ -1,7 +1,7 @@
 module.exports = (sequelize, Sequelize) => {
     const Record = sequelize.define("record", {
         recordContent: {
-            type: Sequelize.BLOB
+            type: Sequelize.STRING
         },
         recordAuthor: {
             type: Sequelize.STRING
