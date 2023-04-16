@@ -3,6 +3,7 @@ const Activity = db.activities;
 const Stage = db.stages;
 const sequelize = db.sequelize;
 const Group = db.groups;
+const Team = db.teams;
 const Op = db.Sequelize.Op;
 
 function calculateExpiryDate(date){
@@ -100,6 +101,7 @@ exports.update = (req, res) => {
 // Print an activity
 exports.getOne = (req, res) => {
     const id = req.params.activityId;
+    let result;
     Activity.findByPk(id, {
         include: [
             {
@@ -109,8 +111,35 @@ exports.getOne = (req, res) => {
             },
         ],
     })
-    .then(activity => {
-        res.send(activity)
+    .then(async (activity) => {
+        // console.log('activity', activity)
+        result = await activity.dataValues
+        let newStages = await activity.dataValues.stagesForActivity;
+        newStages = await newStages.sort(
+            (a, b) => a.stageOrder - b.stageOrder
+        )
+        await Promise.all(newStages.map(async (stage) => {
+            if(stage.grouping === true) {
+                await Stage.findByPk(stage.id,{
+                    include: [
+                        {
+                            model: Team,
+                            as: 'teams',
+                            attributes: ['id', 'teamName', 'teamMembers']
+                        }
+                    ]    
+                })
+                .then(async (stages) => {
+                    newStages[stage.stageOrder-1] = await stages
+                })
+            }
+        }))
+        // console.log('newStages', newStages);
+        result.stagesForActivity = await newStages
+    })
+    .then(() => {
+        // console.log('result', result)
+        res.send(result)
     })
     .catch((err) => {
         console.log('Error occurred while getting an activity.', err)

@@ -35,6 +35,10 @@ exports.editAStage = (req, res) => {
     }
     Stage.update(stage, {where: {id: id}})
     .then(() => {
+        // console.log('updated data', data)
+        // if(data.dataValues.grouping === true) {
+
+        // }
         res.send({message: 'successfully edited!'})
     })
     .catch(err => {
