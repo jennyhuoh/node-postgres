@@ -126,8 +126,10 @@ exports.getOne = (req, res) => {
         var newData = await data.dataValues;
         var member;
         var memberResult = []
+        // console.log('data', data)
         await UserProfile_Group.findOne({where:{group_id:data.dataValues.id, isOwner:true}})
         .then(async (d) => {
+            // console.log('d', d)
             member = await newData.userProfiles.filter(profile => profile.id !== d.dataValues.userProfile_id)
             await UserProfile.findByPk(d.dataValues.userProfile_id)
             .then(owner => {

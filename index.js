@@ -92,6 +92,38 @@ io.on('connection', (socket) => {
             io.to(peerId).emit('unMute', {peerId:socket.id, userId})
         })
     })
+    // Team grouping button variable
+    socket.on('openGroupDiscuss', async ({roomId, teamDetail}) => {
+        console.log('teams', teamDetail)
+        console.log('roomId', roomId)
+        let base = [];
+        const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+        console.log('peers in openDiscuss', peers)
+        await Promise.all(teamDetail.map(async (team) => {
+            await team.teamMembers.map((member) => {
+                let item = {
+                    user: member.id,
+                    team: team.id
+                }
+                base.push(item)
+            })
+        })).then(() => {
+            peers.forEach((peer) => {
+                const id = socketUserMapping[peer].id.toString()
+                console.log('base', base)
+                const index = base.findIndex((item) => {return item.user.toString() === id})
+                console.log('index', index)
+                if(index !== -1) {
+                    
+                    io.to(peer).emit('openGroupDiscuss', {team: base[index].team})
+                } 
+                // else {
+                //     io.to(key).emit('openGroupDiscuss', {team: base[0].team})
+                // }
+            })
+        })
+        
+    })
     // Leaving the room
     const leaveRoom = ({roomID}) => {
         console.log('leave roomID:', roomID)

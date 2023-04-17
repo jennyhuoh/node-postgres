@@ -31,15 +31,15 @@ exports.editAStage = (req, res) => {
     const id = req.params.stageId;
     const stage = {
         stageName: req.body.stageName,
-        grouping: req.body.grouping
+        grouping: req.body.grouping,
+        stageChecked: req.body.stageChecked
     }
     Stage.update(stage, {where: {id: id}})
     .then(() => {
-        // console.log('updated data', data)
-        // if(data.dataValues.grouping === true) {
-
-        // }
-        res.send({message: 'successfully edited!'})
+        Stage.findByPk(id)
+        .then((data) => {
+            res.send(data)
+        })
     })
     .catch(err => {
         res.status(500).send({

@@ -107,7 +107,7 @@ exports.getOne = (req, res) => {
             {
                 model: Stage,
                 as: 'stagesForActivity',
-                attributes: ['id', 'stageName', 'grouping', 'stageOrder'],
+                attributes: ['id', 'stageName', 'grouping', 'stageOrder', 'stageChecked'],
             },
         ],
     })
