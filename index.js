@@ -114,7 +114,6 @@ io.on('connection', (socket) => {
                 const index = base.findIndex((item) => {return item.user.toString() === id})
                 console.log('index', index)
                 if(index !== -1) {
-                    
                     io.to(peer).emit('openGroupDiscuss', {team: base[index].team})
                 } 
                 // else {
@@ -122,7 +121,19 @@ io.on('connection', (socket) => {
                 // }
             })
         })
-        
+    })
+    // Get message
+    socket.on('message', ({userId, userName, message, time, room}) => {
+        console.log('userId', userId)
+        console.log('userName', userName)
+        console.log('msg', message)
+        console.log('time', time)
+        console.log('room', room)
+        io.sockets.in(room).emit('message', {
+            userName: userName,
+            message: message,
+            time: time
+        })
     })
     // Leaving the room
     const leaveRoom = ({roomID}) => {
