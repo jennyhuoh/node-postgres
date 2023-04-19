@@ -13,6 +13,8 @@ module.exports = app => {
     router.get('/group/:groupId/activities', activities.getAll);
     // Delete an activity
     router.delete('/activity/:activityId', activities.delete);
+    // Get single user's all activities
+    router.get('/:userId/activities', activities.allActivities);
 
     app.use(router);
 }

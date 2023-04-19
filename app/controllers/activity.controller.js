@@ -1,9 +1,11 @@
 const db = require('../models');
+const moment = require('moment');
 const Activity = db.activities;
 const Stage = db.stages;
 const sequelize = db.sequelize;
 const Group = db.groups;
 const Team = db.teams;
+const UserProfile_Group = db.userProfile_group;
 const Op = db.Sequelize.Op;
 
 function calculateExpiryDate(date){
@@ -194,6 +196,51 @@ exports.delete = (req, res) => {
     .catch(err => {
         res.status(500).send({
             message: 'failed to delete'
+        })
+    })
+}
+
+// Print single user's all active activities
+exports.allActivities = (req, res) => {
+    const userId = req.params.userId;
+    let resultActivities = [];
+    UserProfile_Group.findAll({where: {userProfile_id: userId}})
+    .then(async (data) => {
+        await Promise.all(data.map(async (d) => {
+            let meetingId;
+            let groupName;
+            console.log('d', d)
+            await Group.findByPk(d.dataValues.group_id)
+            .then(async (data) => {
+                console.log('data', data)
+                meetingId = await data.dataValues.groupMeetingId
+                groupName = await data.dataValues.groupName
+            })
+            await Activity.findAll({where: {bigGroup_id: d.dataValues.group_id}})
+            .then((activities) => {
+                activities.map(async (activity) => {
+                    let data = activity.dataValues
+                    if(moment().isBefore(data.activityExpiryDate)) {
+                        data.groupMeetingId = await meetingId;
+                        data.groupName = await groupName;
+                        resultActivities.push(activity)
+                    }
+                })
+            })
+        }))
+    })
+    .then(() => {
+        resultActivities = resultActivities.sort(
+            (a, b) =>  new Date(a.activityExpiryDate).getTime() - new Date(b.activityExpiryDate).getTime()
+        )
+    })
+    .then(() => {
+        res.send(resultActivities)
+    })
+    .catch(err => {
+        res.status(500).send({
+            message: 
+            err.message || 'failed to get activities'
         })
     })
 }

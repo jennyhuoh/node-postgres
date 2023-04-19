@@ -126,12 +126,16 @@ exports.getOne = (req, res) => {
         var newData = await data.dataValues;
         var member;
         var memberResult = []
+        // console.log('newData id', newData.id)
         // console.log('data', data)
-        await UserProfile_Group.findOne({where:{group_id:data.dataValues.id, isOwner:true}})
+        await UserProfile_Group.findAll({where: {group_id:newData.id}})
         .then(async (d) => {
+            let newD = await d.filter((relation) => relation.dataValues.isOwner === true)
             // console.log('d', d)
-            member = await newData.userProfiles.filter(profile => profile.id !== d.dataValues.userProfile_id)
-            await UserProfile.findByPk(d.dataValues.userProfile_id)
+            // console.log('newD', newD)
+            // let newD = await d[0].dataValues;
+            member = await newData.userProfiles.filter(profile => profile.id !== newD[0].dataValues.userProfile_id)
+            await UserProfile.findByPk(newD[0].dataValues.userProfile_id)
             .then(owner => {
                 newData.owner = owner.dataValues;
                 // newData.member = member;
