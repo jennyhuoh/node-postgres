@@ -96,6 +96,7 @@ io.on('connection', (socket) => {
     socket.on('openGroupDiscuss', async ({roomId, teamDetail}) => {
         console.log('teams', teamDetail)
         console.log('roomId', roomId)
+        let stageId = teamDetail[0].stage_team.stage_id
         let base = [];
         const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
         console.log('peers in openDiscuss', peers)
@@ -114,7 +115,10 @@ io.on('connection', (socket) => {
                 const index = base.findIndex((item) => {return item.user.toString() === id})
                 console.log('index', index)
                 if(index !== -1) {
-                    io.to(peer).emit('openGroupDiscuss', {team: base[index].team})
+                    io.to(peer).emit('openGroupDiscuss', {
+                        team: base[index].team,
+                        stageId: stageId
+                    })
                 } 
                 // else {
                 //     io.to(key).emit('openGroupDiscuss', {team: base[0].team})
@@ -133,6 +137,17 @@ io.on('connection', (socket) => {
             userName: userName,
             message: message,
             time: time
+        })
+    })
+    // Get announcement
+    socket.on('sendAnnouncement', ({content, rooms}) => {
+        // console.log('content', content)
+        // console.log('rooms', rooms)
+        rooms.forEach((room) => {
+            // console.log('room forEach', room)
+            io.sockets.in(`${room}`).emit('sendAnnouncement', {
+                content: content
+            })
         })
     })
     // Leaving the room
@@ -164,7 +179,11 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(morgan('dev'))
-
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 app.get('/', (req, res) => {
     res.status(200).send('Hello World!');
 })

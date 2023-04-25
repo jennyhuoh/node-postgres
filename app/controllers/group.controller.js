@@ -71,7 +71,7 @@ exports.update = async (req, res) => {
         groupExpiryDate: req.body.groupExpiryDate
     }
     Group.update(newGroup, {where: {groupMeetingId: id}})
-
+    // console.log('members', req.body.members)
     const memberArr = [];
     await req.body.members.map((member) => {
         memberArr.push(member.id);
