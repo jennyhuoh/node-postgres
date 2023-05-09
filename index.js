@@ -14,18 +14,23 @@ const port = 3001
 const server = require('http').Server(app).listen(port, () => {console.log('open server on 3001')})
 const io = require('socket.io')(server, {
     cors: {
-        origin: 'http://localhost:3000',
-    }
+        origin: '*',
+        // methods: ["GET", "POST"],
+        // credentials: true
+    },
+    // cors: {
+    //     origin: '*',
+    // }
 })
 
-var users = {};
-var socketToRoom = {};
-var userInfo = []
-function findNowRoom(socket) {
-    return Object.keys(socket.rooms).find(room => {
-        return room!== socket.id
-    })
-}
+// var users = {};
+// var socketToRoom = {};
+// var userInfo = []
+// function findNowRoom(socket) {
+//     return Object.keys(socket.rooms).find(room => {
+//         return room!== socket.id
+//     })
+// }
 var socketUserMapping = {}
 // Sockets
 io.on('connection', (socket) => {
@@ -148,6 +153,12 @@ io.on('connection', (socket) => {
             io.sockets.in(`${room}`).emit('sendAnnouncement', {
                 content: content
             })
+        })
+    })
+    // Get raiseHand
+    socket.on('raiseHand', ({name, room}) => {
+        io.sockets.in(room).emit('raiseHand', {
+            name: name
         })
     })
     // Leaving the room

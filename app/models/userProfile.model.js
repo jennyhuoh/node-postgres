@@ -8,6 +8,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         userRole: {
             type: Sequelize.STRING
+        },
+        userPassword: {
+            type: Sequelize.STRING
         }
     })
 
