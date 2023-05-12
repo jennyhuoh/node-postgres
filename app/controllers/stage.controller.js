@@ -94,7 +94,7 @@ exports.deleteAStage = (req, res) => {
 
 // Update stages' sequence
 exports.updateSequence = async (req, res) => {
-    console.log('body', req.body)
+    // console.log('body', req.body)
     try{
         sequelize.transaction(async (t) => {
             await Promise.all(

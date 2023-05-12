@@ -33,7 +33,7 @@ function calculateStartDate(date) {
 
 // Create and save an activity
 exports.create = (req, res) => {
-    console.log('body', req.body)
+    // console.log('body', req.body)
     var activity = {};
     Group.findOne({where: {groupMeetingId: req.params.groupId}})
     .then((group) => {
@@ -209,10 +209,10 @@ exports.allActivities = (req, res) => {
         await Promise.all(data.map(async (d) => {
             let meetingId;
             let groupName;
-            console.log('d', d)
+            // console.log('d', d)
             await Group.findByPk(d.dataValues.group_id)
             .then(async (data) => {
-                console.log('data', data)
+                // console.log('data', data)
                 meetingId = await data.dataValues.groupMeetingId
                 groupName = await data.dataValues.groupName
             })

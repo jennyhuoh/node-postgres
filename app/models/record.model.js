@@ -5,6 +5,15 @@ module.exports = (sequelize, Sequelize) => {
         },
         recordAuthor: {
             type: Sequelize.STRING
+        },
+        recordAuthorId: {
+            type: Sequelize.INTEGER
+        },
+        recordTargetId: {
+            type: Sequelize.INTEGER
+        },
+        recordTargetName: {
+            type: Sequelize.STRING
         }
     })
 

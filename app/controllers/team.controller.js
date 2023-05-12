@@ -83,7 +83,7 @@ exports.getTeams = (req, res) => {
             (a, b) => a.teamOrder - b.teamOrder
         )
         data.dataValues.teams = newTeams;
-        console.log(data)
+        // console.log(data)
         res.send(data)
     })
     .catch((err) => {
