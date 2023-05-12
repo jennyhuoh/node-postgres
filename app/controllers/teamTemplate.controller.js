@@ -3,6 +3,7 @@ const TeamTemplate = db.teamTemplates;
 const Team = db.teams;
 const UserProfile_Group = db.userProfile_group;
 const UserProfile = db.userProfiles;
+const Group = db.groups
 const sequelize = db.sequelize;
 const Op = db.Sequelize.Op;
 
@@ -39,49 +40,74 @@ exports.createForUser = (req, res) => {
 // 在teamTemplate找到user(userTemplate_id)擁有的template(id)
 // 每個template(teamTemplate_id)關連到team table，儲存該teamTemplate的teamMembers是否與此groupId的所有users吻合
 exports.getTemplates = async (req, res) => {
-    const groupId = req.params.groupId;
-    const userId = req.body.userId;
+    const groupMeetingId = req.params.groupId;
+    const userId = req.params.userId;
+    console.log('req.body', req.body)
+    let groupId;
     var thisGroupMembers = [];
     var resultTemplate = [];
-
-    await UserProfile_Group.findAll({where: {group_id: groupId, isOwner: false}})
-    .then(async (data) => {
-        await Promise.all(
-            data.map(async (d) => {
-                await UserProfile.findByPk(d.dataValues.userProfile_id)
-                .then((user) => {
-                    const info = {
-                        userName: user.dataValues.userName,
-                        userEmail: user.dataValues.userEmail
-                    }
-                    thisGroupMembers.push(info);
-                })
-            })
-        );
+    await Group.findOne({where: {groupMeetingId: groupMeetingId}})
+    .then(async (group) => {
+        // console.log('real group info', group)
+        groupId = await group.dataValues.id
     })
     .then(async () => {
-        await TeamTemplate.findAll({where: {userTemplate_id: userId}})
+        // console.log('groupId', groupId)
+        // 找到目前所在group的members
+        await UserProfile_Group.findAll({where: {group_id: groupId, isOwner: false}})
         .then(async (data) => {
-            if(data){
-                data.map(async (template) =>{
-                    await Team.findAll({where: {teamTemplate_id: template.dataValues.id}})
-                    .then(async (teams) => {
-                        var members = [];
-                        await Promise.all(
-                            teams.map((team) => {
-                                members = members.concat(team.dataValues.teamMembers)
-                            })
-                        )
-                        if(JSON.stringify(members.sort().toString()) === JSON.stringify(thisGroupMembers.sort().toString())) {
-                            resultTemplate.push(template.dataValues)
+            // console.log('find all relations data', data)
+            await Promise.all(
+                data.map(async (d) => {
+                    
+                    await UserProfile.findByPk(d.dataValues.userProfile_id)
+                    .then((user) => {
+                        // console.log('get every users info', user)
+                        const info = {
+                            userName: user.dataValues.userName,
+                            userEmail: user.dataValues.userEmail
                         }
+                        thisGroupMembers.push(info);
                     })
                 })
-            }
+            );
         })
-    })
-    .then(() => {
-        res.send(resultTemplate)
+        .then(async () => {
+            // console.log('userId', userId)
+            await TeamTemplate.findAll({where: {userTemplate_id: userId}})
+            .then(async (data) => {
+                if(data){
+                    // console.log('in here')
+                    await Promise.all(data.map(async (template) =>{
+                        await Team.findAll({where: {teamTemplate_id: template.dataValues.id}})
+                        .then(async (teams) => {
+                            var members = [];
+                            await Promise.all(
+                                teams.map((team) => {
+                                    members = members.concat(team.dataValues.teamMembers)
+                                })
+                            )
+                            if(JSON.stringify(members.sort().toString()) === JSON.stringify(thisGroupMembers.sort().toString())) {
+                                resultTemplate.push(template.dataValues)
+                            }
+                        })
+                    }))
+                }
+            })
+        })
+        .then(() => {
+            console.log('resultTemplate', resultTemplate)
+            // if(resultTemplate.length) {
+            //     console.log('sended this empty')
+            //     return res.send({
+            //         status: 4,
+            //         message: 'none'
+            //     })
+            // } else {
+                // console.log('sended this none empty')
+            res.send(resultTemplate)
+            // }
+        })
     })
     .catch((err) => {
         res.status(500).send({
