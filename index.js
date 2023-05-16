@@ -161,6 +161,11 @@ io.on('connection', (socket) => {
             name: name
         })
     })
+    socket.on('closeMicGetNewData', ({mainRoomId}) => {
+        io.sockets.in(mainRoomId).emit('closeMicGetNewData', {
+            message: 'get a recording'
+        })
+    })
     // Leaving the room
     const leaveRoom = ({roomID}) => {
         console.log('leave roomID:', roomID)
