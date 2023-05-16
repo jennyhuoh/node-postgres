@@ -173,8 +173,10 @@ io.on('connection', (socket) => {
         Array.from(rooms).forEach(roomId => {
             const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
             peers.forEach(peerId => {
-                io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id]?.id})
-                socket.emit('removePeer', {peerId: peerId, userId: socketUserMapping[peerId]?.id})
+                if(Object.keys(socketUserMapping).length !== 0) {
+                    io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id]?.id})
+                    socket.emit('removePeer', {peerId: peerId, userId: socketUserMapping[peerId]?.id})
+                }
             })
             socket.leave(roomID)
         })
@@ -215,14 +217,14 @@ db.sequelize.sync()
 
 const client = new Client({
     user: 'admin',
-    host: 'localhost',
+    host: '140.115.126.21',
     database: 'postgres_db',
     password: 'secret',
     port: 5432,
 })
 client.connect()
 client.query('SELECT NOW()', (err, res) => {
-    console.log("Error or response:: ", err, res);
+    console.log("Error or responsWe:: ", err, res);
     client.end()
 })
 
