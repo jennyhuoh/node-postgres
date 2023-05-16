@@ -174,8 +174,8 @@ io.on('connection', (socket) => {
             const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
             peers.forEach(peerId => {
                 if(Object.keys(socketUserMapping).length !== 0) {
-                    io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id]?.id})
-                    socket.emit('removePeer', {peerId: peerId, userId: socketUserMapping[peerId]?.id})
+                    io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id].id})
+                    socket.emit('removePeer', {peerId: peerId, userId: socketUserMapping[peerId].id})
                 }
             })
             socket.leave(roomID)
