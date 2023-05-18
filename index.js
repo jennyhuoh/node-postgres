@@ -12,16 +12,17 @@ const { SocketAddress } = require('net')
 const app = express()
 const port = 3001
 const server = require('http').Server(app).listen(port, () => {console.log('open server on 3001')})
-const io = require('socket.io')(server, {
-    cors: {
-        origin: '*',
-        // methods: ["GET", "POST"],
-        // credentials: true
-    },
-    // cors: {
-    //     origin: '*',
-    // }
-})
+const io = require('socket.io')(server, {cors: { origin: '*'}})
+//     cors: {
+//         origin: true,
+//         methods: ['GET', 'PATCH', 'POST', 'PUT']
+//         // methods: ["GET", "POST"],
+//         // credentials: true
+//     // },
+//     // cors: {
+//     //     origin: '*',
+//     // }
+// })
 
 // var users = {};
 // var socketToRoom = {};
