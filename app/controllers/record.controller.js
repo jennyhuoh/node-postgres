@@ -25,7 +25,7 @@ exports.createRecord = async (req, res) => {
         // console.log('fd', fd)
         fs.writeFile(fd, recording, (err) => {
             fs.close(fd, (err) => {
-                // res.send({message: 'saved!'})
+                res.send({message: 'saved!'})
             })
         })
     })

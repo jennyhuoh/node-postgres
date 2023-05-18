@@ -35,6 +35,7 @@ var socketUserMapping = {}
 // Sockets
 io.on('connection', (socket) => {
     console.log('new connection', socket.id);
+    // console.log('socket', socket)
 // 這裡開始是mainRoom
     // socket.on('joinRoom', roomID => {
     //     console.log('roomID', roomID)
@@ -51,13 +52,21 @@ io.on('connection', (socket) => {
 
 
     socket.on('joinRoom', async ({roomID, user}) => {
+        let sendSocket = socket.id;
+        const filterArr = Object.values(socketUserMapping)
+        const index = filterArr.findIndex((item) => item.id === user.id);
+        if(index !== -1) {
+            console.log('find the original socketId', Object.keys(socketUserMapping)[index])
+            delete socketUserMapping[Object.keys(socketUserMapping)[index]]
+            // sendSocket = ;
+        } 
         socketUserMapping[socket.id] = user
         // new Map
         const peers = Array.from(io.sockets.adapter.rooms.get(roomID) || []) // clients
         console.log('socketUserMapping', socketUserMapping)
         peers.forEach(peerId => {
             io.to(peerId).emit('addPeer', {
-                peerId: socket.id,
+                peerId: sendSocket,
                 createOffer: false,
                 user
             })
@@ -157,21 +166,25 @@ io.on('connection', (socket) => {
     })
     // Get raiseHand
     socket.on('raiseHand', ({name, room}) => {
+        console.log('raise hand', room)
         io.sockets.in(room).emit('raiseHand', {
             name: name
         })
     })
     socket.on('closeMicGetNewData', ({mainRoomId}) => {
+        console.log('got it', mainRoomId)
         io.sockets.in(mainRoomId).emit('closeMicGetNewData', {
             message: 'get a recording'
         })
     })
     // Leaving the room
-    const leaveRoom = ({roomID}) => {
+    // const leaveRoom = 
+    socket.on('leave', ({roomID}) => {
         console.log('leave roomID:', roomID)
         const {rooms} = socket;
         Array.from(rooms).forEach(roomId => {
             const peers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+            console.log('socketUserMapping[socket.id]', socketUserMapping[socket.id])
             peers.forEach(peerId => {
                 if(Object.keys(socketUserMapping).length !== 0) {
                     io.to(peerId).emit('removePeer', {peerId: socket.id, userId: socketUserMapping[socket.id].id})
@@ -182,8 +195,7 @@ io.on('connection', (socket) => {
         })
         delete socketUserMapping[socket.id]
         console.log('leave!', socketUserMapping)
-    }
-    socket.on('leave', leaveRoom)
+    })
 })
 
 
