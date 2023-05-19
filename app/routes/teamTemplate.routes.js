@@ -3,11 +3,11 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create a team template
-    router.post('/teamTemplate', teamTemplate.createForUser);
+    router.post('/api/teamTemplate', teamTemplate.createForUser);
     // Get usable template
-    router.get('/group/:groupId/:userId/activity/stage/teamTemplate', teamTemplate.getTemplates);
+    router.get('/api/group/:groupId/:userId/activity/stage/teamTemplate', teamTemplate.getTemplates);
     // Give template's team and members
-    router.post('/teamTemplate/:teamTemplateId', teamTemplate.giveTeamMembers);
+    router.post('/api/teamTemplate/:teamTemplateId', teamTemplate.giveTeamMembers);
 
     app.use(router);
 }

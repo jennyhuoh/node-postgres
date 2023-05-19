@@ -1,5 +1,5 @@
 require('dotenv').config()
-
+const fs = require('fs')
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
@@ -10,47 +10,14 @@ const { Pool, Client } = require('pg');
 const { SocketAddress } = require('net')
 
 const app = express()
-const port = 3001
+const port = 8000
 const server = require('http').Server(app).listen(port, () => {console.log('open server on 3001')})
 const io = require('socket.io')(server, {cors: { origin: '*'}})
-//     cors: {
-//         origin: true,
-//         methods: ['GET', 'PATCH', 'POST', 'PUT']
-//         // methods: ["GET", "POST"],
-//         // credentials: true
-//     // },
-//     // cors: {
-//     //     origin: '*',
-//     // }
-// })
 
-// var users = {};
-// var socketToRoom = {};
-// var userInfo = []
-// function findNowRoom(socket) {
-//     return Object.keys(socket.rooms).find(room => {
-//         return room!== socket.id
-//     })
-// }
 var socketUserMapping = {}
 // Sockets
 io.on('connection', (socket) => {
     console.log('new connection', socket.id);
-    // console.log('socket', socket)
-// 這裡開始是mainRoom
-    // socket.on('joinRoom', roomID => {
-    //     console.log('roomID', roomID)
-    //     console.log('socket.id', socket.id)
-    //     if(users[roomID]) {
-    //         users[roomID].push(socket.id);
-    //     } else {
-    //         users[roomID] = [socket.id];
-    //     }
-    //     socketToRoom[socket.id] = roomID;
-    //     const usersInThisRoom = users[roomID].filter(id => id !== socket.id);
-    //     socket.emit('allUsers', usersInThisRoom);
-    // })
-
 
     socket.on('joinRoom', async ({roomID, user}) => {
         let sendSocket = socket.id;
@@ -59,7 +26,6 @@ io.on('connection', (socket) => {
         if(index !== -1) {
             console.log('find the original socketId', Object.keys(socketUserMapping)[index])
             delete socketUserMapping[Object.keys(socketUserMapping)[index]]
-            // sendSocket = ;
         } 
         socketUserMapping[socket.id] = user
         // new Map
@@ -251,10 +217,11 @@ require('./app/routes/teamTemplate.routes')(app);
 var multer = require('multer');
 var upload = multer();
 const records = require('./app/controllers/record.controller');
+const { fstat } = require('fs')
 // Create record
-app.post('/stage/:stageId/team/:teamId/record', upload.any(), records.createRecord)
+app.post('/api/stage/:stageId/team/:teamId/record', upload.any(), records.createRecord)
 // Get records
-app.get('/stage/:stageId/team/:teamId/records', records.getRecords);
+app.get('/api/stage/:stageId/team/:teamId/records', records.getRecords);
 
 
 
@@ -266,73 +233,73 @@ app.get('/stage/:stageId/team/:teamId/records', records.getRecords);
 
 
 
-app.get('/get-token', (req, res) => {
-    const API_KEY = process.env.VIDEOSDK_API_KEY
-    const SECRET_KEY = process.env.VIDEOSDK_SECRET_KEY
+// app.get('/get-token', (req, res) => {
+//     const API_KEY = process.env.VIDEOSDK_API_KEY
+//     const SECRET_KEY = process.env.VIDEOSDK_SECRET_KEY
 
-    const options = { expiresIn: '10m', algorithm: 'HS256'}
+//     const options = { expiresIn: '10m', algorithm: 'HS256'}
 
-    const payload = {
-        apikey: API_KEY,
-        permissions: ["allow_join", "allow_mod"],
-    }
+//     const payload = {
+//         apikey: API_KEY,
+//         permissions: ["allow_join", "allow_mod"],
+//     }
 
-    const token = jwt.sign(payload, SECRET_KEY, options)
-    res.json({token})
-})
+//     const token = jwt.sign(payload, SECRET_KEY, options)
+//     res.json({token})
+// })
 
-app.post('/create-meeting/', (req, res) => {
-    const token = req.body.token
-    // const url = new URL('/v2/rooms',`${process.env.VIDEOSDK_API_ENDPOINT}`)
-    // console.log(url)
-    // const url = `${process.env.VIDEOSDK_API_ENDPOINT}/v2/rooms`
-    const options = {
-        method: 'POST',
-        // token: token,
-        headers: { authorization: token, "Content-Type": "application/json"},
-    }
-    console.log(req.body.token)
-    console.log(token)
-    console.log(options)
-    fetch('https://api.videosdk.live/v2/rooms', options)
-        .then((response) => response.json())
-        .then((result) => res.json(result)) //result will contain meetingId
-        .catch((error) => console.log('error', error))
-})
+// app.post('/create-meeting/', (req, res) => {
+//     const token = req.body.token
+//     // const url = new URL('/v2/rooms',`${process.env.VIDEOSDK_API_ENDPOINT}`)
+//     // console.log(url)
+//     // const url = `${process.env.VIDEOSDK_API_ENDPOINT}/v2/rooms`
+//     const options = {
+//         method: 'POST',
+//         // token: token,
+//         headers: { authorization: token, "Content-Type": "application/json"},
+//     }
+//     console.log(req.body.token)
+//     console.log(token)
+//     console.log(options)
+//     fetch('https://api.videosdk.live/v2/rooms', options)
+//         .then((response) => response.json())
+//         .then((result) => res.json(result)) //result will contain meetingId
+//         .catch((error) => console.log('error', error))
+// })
 
-app.get('/get-recordings', async(req, res) => {
-    const token = req.body.token
-    const roomId = req.body.roomId
+// app.get('/get-recordings', async(req, res) => {
+//     const token = req.body.token
+//     const roomId = req.body.roomId
 
-    const options={
-        method: 'GET',
-        headers: { Authorization: token, "Content-Type": "application/json"},
-    }
-    fetch(`https://api.videosdk.live/v2/recordings?roomId=${roomId}`, options)
-    // const data = await response.json()
-    .then((response) => response.json)
-    .then((result) => res.json(result))
-    .catch((error) => console.log('error', error))
-    // res.json();
-    // console.log(data);
-})
+//     const options={
+//         method: 'GET',
+//         headers: { Authorization: token, "Content-Type": "application/json"},
+//     }
+//     fetch(`https://api.videosdk.live/v2/recordings?roomId=${roomId}`, options)
+//     // const data = await response.json()
+//     .then((response) => response.json)
+//     .then((result) => res.json(result))
+//     .catch((error) => console.log('error', error))
+//     // res.json();
+//     // console.log(data);
+// })
 
-app.post('/validate-meeting/:meetingId', (req, res) => {
-    const token = req.body.token
-    const meetingId = req.params.meetingId
+// app.post('/validate-meeting/:meetingId', (req, res) => {
+//     const token = req.body.token
+//     const meetingId = req.params.meetingId
 
-    const url = `${process.env.VIDEOSDK_API_ENDPOINT}/api/meetings/${meetingId}`
+//     const url = `${process.env.VIDEOSDK_API_ENDPOINT}/api/meetings/${meetingId}`
     
-    const options = {
-        method: 'POST',
-        headers: { Authorization: token },
-    }
+//     const options = {
+//         method: 'POST',
+//         headers: { Authorization: token },
+//     }
 
-    fetch(url, options)
-        .then((response) => response.json())
-        .then((result) => res.json(result))
-        .catch((error) => console.log('error', error))
-})
+//     fetch(url, options)
+//         .then((response) => response.json())
+//         .then((result) => res.json(result))
+//         .catch((error) => console.log('error', error))
+// })
 
 // app.listen(port, () => {
 //     console.log(`App running on port ${port}.`)

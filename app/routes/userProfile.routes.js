@@ -4,13 +4,13 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create a new User
-    router.post('/register', userProfiles.create);
+    router.post('/api/register', userProfiles.create);
 
     // Get all users
-    router.get('/users', userProfiles.getAll)
+    router.get('/api/users', userProfiles.getAll)
 
     // User Login
-    router.post('/login', userProfiles.login);
+    router.post('/api/login', userProfiles.login);
 
     app.use(router)
 }

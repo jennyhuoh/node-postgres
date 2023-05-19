@@ -4,17 +4,17 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create a new activity
-    router.post('/group/:groupId/activity', activities.create);
+    router.post('/api/group/:groupId/activity', activities.create);
     // Update an activity
-    router.post('/activity/:activityId', activities.update);
+    router.post('/api/activity/:activityId', activities.update);
     // Get an activity
-    router.get('/activity/:activityId', activities.getOne);
+    router.get('/api/activity/:activityId', activities.getOne);
     // Get all activities in a group
-    router.get('/group/:groupId/activities', activities.getAll);
+    router.get('/api/group/:groupId/activities', activities.getAll);
     // Delete an activity
-    router.delete('/activity/:activityId', activities.delete);
+    router.delete('/api/activity/:activityId', activities.delete);
     // Get single user's all activities
-    router.get('/:userId/activities', activities.allActivities);
+    router.get('/api/:userId/activities', activities.allActivities);
 
     app.use(router);
 }

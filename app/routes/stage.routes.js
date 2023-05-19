@@ -4,13 +4,13 @@ module.exports = app => {
     var router = require('express').Router();
 
     // Create a stage
-    router.post('/stage', stages.createAStage);
+    router.post('/api/stage', stages.createAStage);
     // Edit a stage
-    router.post('/stage/:stageId', stages.editAStage);
+    router.post('/api/stage/:stageId', stages.editAStage);
     // Update stages' sequence
-    router.post('/stages', stages.updateSequence);
+    router.post('/api/stages', stages.updateSequence);
     // Delete a stage
-    router.delete('/stage/:stageId', stages.deleteAStage)
+    router.delete('/api/stage/:stageId', stages.deleteAStage)
 
     app.use(router);
 }
