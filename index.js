@@ -12,7 +12,11 @@ const { SocketAddress } = require('net')
 const app = express()
 const port = 8000
 const server = require('http').Server(app).listen(port, () => {console.log('open server on 3001')})
-const io = require('socket.io')(server, {cors: { origin: '*'}})
+const io = require('socket.io')(server, {
+    cors: { origin: '*'},
+    methods: ["GET", "POST"],
+    allowEI03: true
+})
 
 var socketUserMapping = {}
 // Sockets
@@ -165,9 +169,6 @@ io.on('connection', (socket) => {
     })
 })
 
-
-
-
 // server.listen(port, () => {
 //     console.log('listening on *: 3001')
 // })
@@ -222,85 +223,3 @@ const { fstat } = require('fs')
 app.post('/api/stage/:stageId/team/:teamId/record', upload.any(), records.createRecord)
 // Get records
 app.get('/api/stage/:stageId/team/:teamId/records', records.getRecords);
-
-
-
-
-
-
-
-
-
-
-
-// app.get('/get-token', (req, res) => {
-//     const API_KEY = process.env.VIDEOSDK_API_KEY
-//     const SECRET_KEY = process.env.VIDEOSDK_SECRET_KEY
-
-//     const options = { expiresIn: '10m', algorithm: 'HS256'}
-
-//     const payload = {
-//         apikey: API_KEY,
-//         permissions: ["allow_join", "allow_mod"],
-//     }
-
-//     const token = jwt.sign(payload, SECRET_KEY, options)
-//     res.json({token})
-// })
-
-// app.post('/create-meeting/', (req, res) => {
-//     const token = req.body.token
-//     // const url = new URL('/v2/rooms',`${process.env.VIDEOSDK_API_ENDPOINT}`)
-//     // console.log(url)
-//     // const url = `${process.env.VIDEOSDK_API_ENDPOINT}/v2/rooms`
-//     const options = {
-//         method: 'POST',
-//         // token: token,
-//         headers: { authorization: token, "Content-Type": "application/json"},
-//     }
-//     console.log(req.body.token)
-//     console.log(token)
-//     console.log(options)
-//     fetch('https://api.videosdk.live/v2/rooms', options)
-//         .then((response) => response.json())
-//         .then((result) => res.json(result)) //result will contain meetingId
-//         .catch((error) => console.log('error', error))
-// })
-
-// app.get('/get-recordings', async(req, res) => {
-//     const token = req.body.token
-//     const roomId = req.body.roomId
-
-//     const options={
-//         method: 'GET',
-//         headers: { Authorization: token, "Content-Type": "application/json"},
-//     }
-//     fetch(`https://api.videosdk.live/v2/recordings?roomId=${roomId}`, options)
-//     // const data = await response.json()
-//     .then((response) => response.json)
-//     .then((result) => res.json(result))
-//     .catch((error) => console.log('error', error))
-//     // res.json();
-//     // console.log(data);
-// })
-
-// app.post('/validate-meeting/:meetingId', (req, res) => {
-//     const token = req.body.token
-//     const meetingId = req.params.meetingId
-
-//     const url = `${process.env.VIDEOSDK_API_ENDPOINT}/api/meetings/${meetingId}`
-    
-//     const options = {
-//         method: 'POST',
-//         headers: { Authorization: token },
-//     }
-
-//     fetch(url, options)
-//         .then((response) => response.json())
-//         .then((result) => res.json(result))
-//         .catch((error) => console.log('error', error))
-// })
-
-// app.listen(port, () => {
-//     console.log(`App running on port ${port}.`)
-// })

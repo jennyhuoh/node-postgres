@@ -1,7 +1,7 @@
 FROM node:18.12.1
-WORKDIR /usr/src/app
-COPY package.json ./
-COPY package-lock.json ./
-COPY ./ ./
+WORKDIR /node-postgres
+COPY package*.json ./
 RUN npm install
+COPY . ./
+EXPOSE 8000
 CMD ["node", "index.js"]
